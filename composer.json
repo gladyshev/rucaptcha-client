@@ -1,0 +1,29 @@
+{
+  "name": "gladyshev/rucaptcha-client",
+  "keywords": ["php", "library", "client", "captcha recognition", "rucaptcha"],
+  "minimum-stability": "stable",
+  "type": "library",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Dmitry Gladyshev",
+      "email": "deel@email.com",
+      "homepage": "https://github.com/gladyshev"
+    }
+  ],
+  "require": {
+    "php" : ">=5.6",
+    "guzzlehttp/guzzle": "6.1.*",
+    "psr/log": "*"
+  },
+  "autoload": {
+    "psr-4": {
+      "Rucaptcha\\" : "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Rucaptcha\\tests\\" : "tests/"
+    }
+  }
+}

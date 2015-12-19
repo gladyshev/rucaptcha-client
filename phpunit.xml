@@ -1,0 +1,15 @@
+<phpunit
+        bootstrap="vendor/autoload.php"
+        verbose="true"
+        backupGlobals="false"
+        colors="true"
+        convertErrorsToExceptions="true"
+        convertNoticesToExceptions="true"
+        convertWarningsToExceptions="true"
+>
+    <testsuites>
+        <testsuite>
+            <directory suffix="Test.php">./tests/functional</directory>
+        </testsuite>
+    </testsuites>
+</phpunit>
