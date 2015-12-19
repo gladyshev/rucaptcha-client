@@ -2,7 +2,7 @@
 
 **PHP 5.6**
 
-## Пример ##
+### Пример ###
 
 ```php
 $rucaptcha = new Rucaptcha\Client('YOUR_API_KEY', [
@@ -16,7 +16,7 @@ $captchaText = $rucaptcha->recognizeFile('/captcha.png', [
 print_r($captchaText);
 ```
 
-## Методы `Rucaptcha\Client` ##
+### Методы `Rucaptcha\Client` ###
 
 ```php
 Client Client::setOptions(array $options);
@@ -27,7 +27,8 @@ string Client::getBalance();
 bool Client::badCaptcha(string $captchaId);
 array Client::getLoad(array $paramsList = []);
 ```
-## Опции клиента ##
+
+### Опции клиента ###
 
 Параметр | Тип | По умолчанию | Возможные значения
 ---| --- | --- | ---
@@ -37,7 +38,8 @@ array Client::getLoad(array $paramsList = []);
 `mTimeout` | integer | 120 | Таймаут ожидания ответа при получении результата распознавания
 `serverBaseUri`| string | 'http://rucaptcha.com' | Базовый URI сервиса
 
-## Параметры распознавания капчи `$extra` ##
+
+### Параметры распознавания капчи `$extra` ###
 
 Параметр | Тип | По умолчанию | Возможные значения
 ---| --- | --- | ---
