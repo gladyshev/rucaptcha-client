@@ -29,6 +29,5 @@ trait ConfigurableTrait
                 throw new InvalidArgumentException("Property `{$property}` not found in class `" . __CLASS__ . "`.");
             }
         }
-        return $this;
     }
 }

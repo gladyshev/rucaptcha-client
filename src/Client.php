@@ -25,12 +25,12 @@ class Client extends GenericClient
     /**
      * @inheritdoc
      */
-    public function recognize($content, array $extra = [])
+    public function sendCaptcha($content, array $extra = [])
     {
-        if ($this->softId !== '') {
+        if ($this->softId) {
             $extra[Extra::SOFT_ID] = $this->softId;
         }
-        return parent::recognize($content, $extra);
+        return parent::sendCaptcha($content, $extra);
     }
 
     /**
@@ -38,7 +38,7 @@ class Client extends GenericClient
      */
     public function getBalance()
     {
-        $response = $this->getClient()->request('GET', "/res.php?key={$this->apiKey}&action=getbalance");
+        $response = $this->getHttpClient()->request('GET', "/res.php?key={$this->apiKey}&action=getbalance");
         return $response->getBody()->__toString();
     }
 
@@ -49,10 +49,10 @@ class Client extends GenericClient
      */
     public function badCaptcha($captchaId)
     {
-        $response = $this->getClient()->request('GET', "/res.php?action=reportbad&id={$captchaId}");
-        if ($response->getBody()->__toString() === self::STATUS_OK_REPORT_RECORDED)
+        $response = $this->getHttpClient()->request('GET', "/res.php?action=reportbad&id={$captchaId}");
+        if ($response->getBody()->__toString() === self::STATUS_OK_REPORT_RECORDED) {
             return true;
-
+        }
         throw new RuntimeException('Report sending trouble: ' . $response->getBody() . '.');
     }
 
@@ -62,7 +62,7 @@ class Client extends GenericClient
      */
     public function getLoad(array $paramsList = ['waiting', 'load', 'minbid', 'averageRecognitionTime'])
     {
-        $response = $this->getClient()->request('GET', "/load.php");
+        $response = $this->getHttpClient()->request('GET', "/load.php");
         $responseText = $response->getBody()->__toString();
         $statusData = [];
 

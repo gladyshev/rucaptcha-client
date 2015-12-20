@@ -19,9 +19,24 @@ print_r($captchaText);
 ### Методы `Rucaptcha\Client` ###
 
 ```php
+
+/* Configutation*/
+
 Client Client::setOptions(array $options);
+void Client::setHttClient(GuzzleHttp\ClientInterface $client);
+void Client::setLogger(Psr\Log\LoggerInterface $logger);
+
+
+/* Captcha solving */
+
 string Client::recognize(string $content, array $extra = []);
 string Client::recognizeFile(string $path, array $extra = []);
+string Client::sendCaptcha(string $content, array $extra = []);
+string Client::getCaptchaResult(string $captchaId);
+
+
+/* Additional */
+
 string Client::getLastCaptchaId();
 string Client::getBalance();
 bool Client::badCaptcha(string $captchaId);

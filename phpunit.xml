@@ -9,6 +9,9 @@
 >
     <testsuites>
         <testsuite>
+            <directory suffix="Test.php">./tests/unit</directory>
+        </testsuite>
+        <testsuite>
             <directory suffix="Test.php">./tests/functional</directory>
         </testsuite>
     </testsuites>

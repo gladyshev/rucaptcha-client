@@ -15,6 +15,7 @@ use Psr\Log\LoggerInterface;
 use Rucaptcha\Exception\InvalidArgumentException;
 use Rucaptcha\Exception\RucaptchaException;
 use Rucaptcha\Exception\RuntimeException;
+use SplFileObject;
 
 class GenericClient implements LoggerAwareInterface
 {
@@ -28,7 +29,7 @@ class GenericClient implements LoggerAwareInterface
     /**
      * @var string
      */
-    public $lastCaptchaId = '';
+    protected $lastCaptchaId = '';
 
     /**
      * @var string
@@ -58,7 +59,7 @@ class GenericClient implements LoggerAwareInterface
     /**
      * @var ClientInterface
      */
-    private $client = null;
+    private $httpClient = null;
 
     /**
      * @param array $options
@@ -68,6 +69,25 @@ class GenericClient implements LoggerAwareInterface
     {
         $this->apiKey = $apiKey;
         $this->setOptions($options);
+    }
+
+    /**
+     * @return string   # Last successfully sent captcha task ID
+     */
+    public function getLastCaptchaId()
+    {
+        return $this->lastCaptchaId;
+    }
+
+    /**
+     * @param ClientInterface $client
+     * @return $this
+     */
+    public function setHttpClient(ClientInterface $client)
+    {
+        $this->httpClient = $client;
+
+        return $this;
     }
 
     /**
@@ -82,55 +102,15 @@ class GenericClient implements LoggerAwareInterface
             throw new InvalidArgumentException("Captcha file `$path` not found.");
         }
 
-        $fp = fopen($path, 'r');
+        $file = new SplFileObject($path, 'r');
 
         $content = '';
 
-        while (!feof($fp)) {
-            $content .= fgets($fp, 1024);
-        }
-
-        fclose($fp);
-
-        if (isset($extra[Extra::CONTENT_TYPE])) {
-            $extension = self::resolveFileExtension($path);
-            $extra[Extra::CONTENT_TYPE] = self::resolveContentType($extension);
+        while (!$file->eof()) {
+            $content .=  $file->fgets();
         }
 
         return $this->recognize($content, $extra);
-    }
-
-    /**
-     * @param ClientInterface $client
-     * @return $this
-     */
-    public function setClient(ClientInterface $client)
-    {
-        $this->client = $client;
-
-        return $this;
-    }
-
-    /**
-     * @return ClientInterface
-     */
-    public function getClient()
-    {
-        if ($this->client === null) {
-            $this->client = new GuzzleClient(['base_uri' => $this->serverBaseUri]);
-        }
-        return $this->client;
-    }
-
-    /**
-     * @return LoggerInterface
-     */
-    protected function getLogger()
-    {
-        if ($this->logger === null) {
-            $this->setLogger(new Logger($this->verbose));
-        }
-        return $this->logger;
     }
 
     /**
@@ -145,7 +125,48 @@ class GenericClient implements LoggerAwareInterface
 
         $this->getLogger()->info("Try send captcha image on {$this->serverBaseUri}/in.php");
 
-        $response = $this->getClient()->request('POST', '/in.php', [
+        $captchaId = $this->sendCaptcha($content, $extra);
+
+
+        /* Get captcha recognition result */
+
+        $this->getLogger()->info("Sending success. Got captcha id `$captchaId`.");
+
+        $startTime = time();
+
+        while (true) {
+
+            $this->getLogger()->info("Waiting {$this->rTimeout} sec.");
+
+            sleep($this->rTimeout);
+
+            if (time() - $startTime >= $this->mTimeout) {
+                throw new RuntimeException("Captcha waiting timeout.");
+            }
+
+            $result = $this->getCaptchaResult($captchaId);
+
+            if ($result === false) {
+                continue;
+            }
+
+            $this->getLogger()->info("Got OK response: `{$result}`. Elapsed " . (time() - $startTime) . ' sec.');
+
+            return $result;
+        }
+
+        throw new RuntimeException('Unknown recognition logic error.');
+    }
+
+    /**
+     * @param string $content       # Captcha image content
+     * @param array $extra          # Array of recognition options
+     * @return string               # Captcha task ID
+     * @throws RuntimeException
+     */
+    public function sendCaptcha($content, array $extra = [])
+    {
+        $response = $this->getHttpClient()->request('POST', '/in.php', [
             RequestOptions::HEADERS => [
                 'Content-Type' => 'application/x-www-form-urlencoded'
             ],
@@ -166,51 +187,36 @@ class GenericClient implements LoggerAwareInterface
             throw new RuntimeException($this->getErrorMessage($responseText) ?: "Unknown error: `{$responseText}`.");
         }
 
+        $this->lastCaptchaId = explode("|", $responseText)[1];
 
-        /* Get captcha recognition result */
-
-        list($status, $captchaId) = explode("|", $responseText);
-
-        $this->getLogger()->info("Sending success. Got captcha id `$captchaId`.");
-
-        $startTime = time();
-
-        $this->lastCaptchaId = $captchaId;
-
-        while (true) {
-            unset($response, $responseText, $status);
-
-            $this->getLogger()->info("Waiting {$this->rTimeout} sec.");
-
-            sleep($this->rTimeout);
-
-            if (time() - $startTime >= $this->mTimeout) {
-                throw new RuntimeException("Captcha waiting timeout.");
-            }
-
-            $response = $this->getClient()->request('GET', "/res.php?key={$this->apiKey}&action=get&id={$captchaId}");
-
-            $responseText = $response->getBody()->__toString();
-
-            if ($responseText === self::STATUS_CAPTCHA_NOT_READY) {
-                continue;
-            }
-
-            if (strpos($responseText, 'OK|') !== false) {
-
-                $this->getLogger()->info("Got OK response: {$responseText}. Elapsed " . (time() - $startTime) . ' sec.');
-
-                list($status, $captchaText) = explode('|', $responseText);
-
-                return html_entity_decode(trim($captchaText));
-            }
-            throw new RuntimeException($this->getErrorMessage($responseText) ?: "Unknown error: `{$responseText}`.");
-        }
+        return $this->lastCaptchaId;
     }
 
     /**
-     * @param string $responseText
-     * @return false|string
+     * @param string $captchaId     # Captcha task ID
+     * @return string|false         # Solved captcha text or false if captcha is not ready
+     * @throws RuntimeException
+     */
+    public function getCaptchaResult($captchaId)
+    {
+        $response = $this->getHttpClient()->request('GET', "/res.php?key={$this->apiKey}&action=get&id={$captchaId}");
+
+        $responseText = $response->getBody()->__toString();
+
+        if ($responseText === self::STATUS_CAPTCHA_NOT_READY) {
+            return false;
+        }
+
+        if (strpos($responseText, 'OK|') !== false) {
+            return html_entity_decode(trim(explode('|', $responseText)[1]));
+        }
+
+        throw new RuntimeException($this->getErrorMessage($responseText) ?: "Unknown error: `{$responseText}`.");
+    }
+
+    /**
+     * @param string $responseText  # Server response text usually begin with `ERROR_` prefix
+     * @return false|string         # Error message text or false if associated message in not found
      */
     protected function getErrorMessage($responseText)
     {
@@ -220,42 +226,26 @@ class GenericClient implements LoggerAwareInterface
     }
 
     /**
-     * @param string $extension
-     * @return string
-     * @throws RucaptchaException
+     * @return ClientInterface
      */
-    protected static function resolveContentType($extension)
+    protected function getHttpClient()
     {
-        // ToDo: refactor this bullshit
-
-        if (empty($extension)) {
-            throw new InvalidArgumentException("The type of content cannot be detected, because file extension is empty.");
+        if ($this->httpClient === null) {
+            $this->httpClient = new GuzzleClient([
+                'base_uri' => $this->serverBaseUri
+            ]);
         }
-
-        switch ($extension) {
-            case 'jpeg':
-            case 'jpg':
-                return "image/pjpeg";
-
-            default:
-                return 'image/' . $extension;
-        }
+        return $this->httpClient;
     }
 
     /**
-     * @param string $path
-     * @param string $delimiter
-     * @return string
-     * @throws InvalidArgumentException
+     * @return LoggerInterface
      */
-    protected static function resolveFileExtension($path, $delimiter = '.')
+    protected function getLogger()
     {
-        //ToDo: use SPL helper
-
-        if (($position = strrpos($path, $delimiter)) === false) {
-            throw new InvalidArgumentException("Could not resolve file `{$path}` extension.");
+        if ($this->logger === null) {
+            $this->setLogger(new Logger($this->verbose));
         }
-
-        return strtolower(substr($path, ++$position));
+        return $this->logger;
     }
 }
