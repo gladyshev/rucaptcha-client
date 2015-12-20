@@ -23,7 +23,7 @@ print_r($captchaText);
 /* Configutation*/
 
 Client Client::setOptions(array $options);
-void Client::setHttClient(GuzzleHttp\ClientInterface $client);
+void Client::setHttpClient(GuzzleHttp\ClientInterface $client);
 void Client::setLogger(Psr\Log\LoggerInterface $logger);
 
 
