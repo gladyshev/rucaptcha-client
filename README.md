@@ -19,10 +19,11 @@ print_r($captchaText);
 ### Методы `Rucaptcha\Client` ###
 
 ```php
+use Rucaptcha\Client;
 
 /* Configutation*/
 
-Client Client::setOptions(array $options);
+void Client::setOptions(array $options);
 void Client::setHttpClient(GuzzleHttp\ClientInterface $client);
 void Client::setLogger(Psr\Log\LoggerInterface $logger);
 
