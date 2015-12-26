@@ -21,12 +21,6 @@ class GenericClientTest extends \PHPUnit_Framework_TestCase
         ]);
     }
 
-    public function testClientLoggerMustImplementPsrLog()
-    {
-        $client = new GenericClient('');
-        $this->assertInstanceOf('\Psr\Log\LoggerAwareInterface', $client);
-    }
-
     public function testEmptyCaptchaIdBeforeFirstSendCaptchaTask()
     {
         $client = new GenericClient('');

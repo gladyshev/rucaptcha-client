@@ -1,19 +1,28 @@
 # rucaptcha-client #
 
-**PHP 5.6**
+**PHP 5.5.0**
 
 ### Пример ###
 
 ```php
-$rucaptcha = new Rucaptcha\Client('YOUR_API_KEY', [
-    'verbose' => true
-]);
+$rucaptcha = new Rucaptcha\Client('YOUR_API_KEY');
 
-$captchaText = $rucaptcha->recognizeFile('/captcha.png', [
-    'regsense' => 1
-]);
-
+$captchaText = $rucaptcha->recognizeFile('/captcha.png');
 print_r($captchaText);
+```
+
+### Установка ###
+
+```bash
+composer require gladyshev/rucaptcha-client
+```
+или
+```php
+"require": {
+  ...
+  "gladyshev/rucaptcha-client": "1.0.*"
+  ...
+}
 ```
 
 ### Методы `Rucaptcha\Client` ###
@@ -21,7 +30,7 @@ print_r($captchaText);
 ```php
 use Rucaptcha\Client;
 
-/* Configutation*/
+/* Configutation */
 
 void Client::setOptions(array $options);
 void Client::setHttpClient(GuzzleHttp\ClientInterface $client);
@@ -36,13 +45,14 @@ string Client::sendCaptcha(string $content, array $extra = []);
 string Client::getCaptchaResult(string $captchaId);
 
 
-/* Additional */
+/* Other */
 
 string Client::getLastCaptchaId();
 string Client::getBalance();
 bool Client::badCaptcha(string $captchaId);
 array Client::getLoad(array $paramsList = []);
 ```
+
 
 ### Опции клиента ###
 

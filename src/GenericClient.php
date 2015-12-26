@@ -91,7 +91,7 @@ class GenericClient implements LoggerAwareInterface
     }
 
     /**
-     * @param $path
+     * @param string $path
      * @param array $extra
      * @return string
      * @throws RucaptchaException
@@ -114,7 +114,7 @@ class GenericClient implements LoggerAwareInterface
     }
 
     /**
-     * @param $content
+     * @param string $content
      * @param array $extra
      * @return string
      * @throws RuntimeException
