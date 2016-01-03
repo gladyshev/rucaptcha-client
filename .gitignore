@@ -1,13 +1,10 @@
-# JetBrains cool IDE
-/.idea
+# JetBrains IDE
+/.idea/
 
-# Composer
+# Composer files
 /vendor/
-/composer.phar
-/composer.lock
+composer.phar
+composer.lock
 
-# PHPUnit library
+# PHPUnit files
 phpunit.phar
-
-# private files
-/tests/private/
