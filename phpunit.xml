@@ -1,5 +1,5 @@
 <phpunit
-        bootstrap="vendor/autoload.php"
+        bootstrap="./vendor/autoload.php"
         verbose="true"
         backupGlobals="false"
         colors="true"
@@ -8,11 +8,8 @@
         convertWarningsToExceptions="true"
 >
     <testsuites>
-        <testsuite>
-            <directory suffix="Test.php">./tests/unit</directory>
-        </testsuite>
-        <testsuite>
-            <directory suffix="Test.php">./tests/functional</directory>
+        <testsuite name="Rucaptcha API client unit tests">
+            <directory suffix="Test.php">./tests/</directory>
         </testsuite>
     </testsuites>
 </phpunit>
