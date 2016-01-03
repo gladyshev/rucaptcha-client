@@ -10,23 +10,24 @@ use Rucaptcha\Exception\InvalidArgumentException;
 
 trait ConfigurableTrait
 {
-    public function setOptions(array $properties, $ignoreMissingProperties = false)
+    public function setOptions(array $options, $ignoreMissingOptions = false)
     {
-        foreach ($properties as $property => $value) {
-            $setter = 'set' . ucfirst($property);
+        foreach ($options as $option => $value)
+        {
+            $setter = 'set' . ucfirst($option);
 
             if (method_exists($this, $setter)) {
                 $this->$setter($value);
                 continue;
             }
 
-            if (property_exists($this, $property)) {
-                $this->$property = $value;
+            if (property_exists($this, $option)) {
+                $this->$option = $value;
                 continue;
             }
 
-            if (!$ignoreMissingProperties) {
-                throw new InvalidArgumentException("Property `{$property}` not found in class `" . __CLASS__ . "`.");
+            if (!$ignoreMissingOptions) {
+                throw new InvalidArgumentException("Property `{$option}` not found in class `" . __CLASS__ . "`.");
             }
         }
     }
