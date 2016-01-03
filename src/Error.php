@@ -10,6 +10,7 @@ class Error
 {
     const KEY_DOES_NOT_EXIST            = 'ERROR_KEY_DOES_NOT_EXIST';
     const WRONG_ID_FORMAT               = 'ERROR_WRONG_ID_FORMAT';
+    const WRONG_USER_KEY                = 'ERROR_WRONG_USER_KEY';
     const ZERO_BALANCE                  = 'ERROR_ZERO_BALANCE';
     const CAPTCHA_UNSOLVABLE            = 'ERROR_CAPTCHA_UNSOLVABLE';
     const NO_SLOT_AVAILABLE             = 'ERROR_NO_SLOT_AVAILABLE';
@@ -25,6 +26,7 @@ class Error
     static $messages = [
         self::KEY_DOES_NOT_EXIST       => 'Использован несуществующий key.',
         self::WRONG_ID_FORMAT          => 'Неверный формат ID капчи. ID должен содержать только цифры.',
+        self::WRONG_USER_KEY           => 'Не верный формат параметра key, должно быть 32 символа',
         self::ZERO_BALANCE             => 'Баланс Вашего аккаунта нулевой.',
         self::CAPTCHA_UNSOLVABLE       => 'Капчу не смогли разгадать 3 разных работника. Списанные средства за это изображение возвращаются обратно на баланс.',
         self::NO_SLOT_AVAILABLE        => 'Текущая ставка распознования выше, чем максимально установленная в настройках Вашего аккаунта. Либо на сервере скопилась очередь и работники не успевают её разобрать, повторите загрузку через 5 секунд.',
