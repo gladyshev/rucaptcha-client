@@ -18,7 +18,7 @@ class Client extends GenericClient
     protected $serverBaseUri = 'http://rucaptcha.com';
 
     /**
-     * Your soft ID in Rucaptcha catalog.
+     * Your application ID in Rucaptcha catalog.
      * That value `1013` is ID of this library, set it in false if you want to turn off sending any id.
      * @see https://rucaptcha.com/software/view/php-api-client
      * @var string
