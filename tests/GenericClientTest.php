@@ -24,22 +24,11 @@ class GenericClientTest extends \PHPUnit_Framework_TestCase
         $this->assertInstanceOf(ClientInterface::class, $httpClient);
     }
 
-    public function testGetLoggerMustReturnLoggerIntefaceInstance()
+    public function testGetLoggerMustReturnLoggerInterfaceInstance()
     {
         $client = new GenericClient('');
         $logger = $this->invokeMethod($client, 'getLogger');
         $this->assertInstanceOf(LoggerInterface::class, $logger);
-    }
-
-    /**
-     * @expectedException \Rucaptcha\Exception\InvalidArgumentException
-     */
-    public function testInvalidArgumentExceptionOnSetInvalidOptions()
-    {
-        $client = new GenericClient('');
-        $client->setOptions([
-            'imAnIncorrectOption' => 100500
-        ]);
     }
 
     public function testEmptyCaptchaIdBeforeFirstSendCaptchaTask()

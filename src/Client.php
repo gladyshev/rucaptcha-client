@@ -18,16 +18,19 @@ class Client extends GenericClient
     protected $serverBaseUri = 'http://rucaptcha.com';
 
     /**
+     * Your soft ID in Rucaptcha catalog.
+     * That value `1013` is ID of this library, set it in false if you want to turn off sending any id.
+     * @see https://rucaptcha.com/software/view/php-api-client
      * @var string
      */
-    private $softId = '1013';
+    protected $softId = '1013';
 
     /**
      * @inheritdoc
      */
     public function sendCaptcha($content, array $extra = [])
     {
-        if ($this->softId) {
+        if ($this->softId && !isset($extra[Extra::SOFT_ID])) {
             $extra[Extra::SOFT_ID] = $this->softId;
         }
         return parent::sendCaptcha($content, $extra);

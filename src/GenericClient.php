@@ -243,8 +243,12 @@ class GenericClient implements LoggerAwareInterface
      */
     protected function getLogger()
     {
-        if ($this->logger === null) {
-            $this->setLogger(new Logger($this->verbose));
+        if ($this->logger === null)
+        {
+            $defaultLogger = new Logger;
+            $defaultLogger->verbose =& $this->verbose;
+
+            $this->setLogger($defaultLogger);
         }
         return $this->logger;
     }
