@@ -117,7 +117,9 @@ class GenericClientTest extends \PHPUnit_Framework_TestCase
             [Error::WRONG_FILE_EXTENSION],
             [Error::IMAGE_TYPE_NOT_SUPPORTED],
             [Error::IP_NOT_ALLOWED],
-            [Error::IP_BANNED]
+            [Error::IP_BANNED],
+            ["<html><head></head><body><h1>Page Not Found 404</h1></body></html>"],
+            ["ERROR_NEW_SERVICE_ERROR_TYPE"]
         ];
     }
 
@@ -128,7 +130,9 @@ class GenericClientTest extends \PHPUnit_Framework_TestCase
             [Error::KEY_DOES_NOT_EXIST],
             [Error::CAPTCHA_UNSOLVABLE],
             [Error::WRONG_CAPTCHA_ID],
-            [Error::BAD_DUPLICATES]
+            [Error::BAD_DUPLICATES],
+            ["<html><head></head><body><h1>Page Not Found 404</h1></body></html>"],
+            ["ERROR_NEW_SERVICE_ERROR_TYPE"]
         ];
     }
 
@@ -148,7 +152,6 @@ class GenericClientTest extends \PHPUnit_Framework_TestCase
 
         return $genericClient;
     }
-
 
     /**
      * Call protected/private method of a class.

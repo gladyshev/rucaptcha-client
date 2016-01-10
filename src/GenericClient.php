@@ -179,17 +179,12 @@ class GenericClient implements LoggerAwareInterface
 
         $responseText = $response->getBody()->__toString();
 
-        if (strpos($responseText, 'ERROR') !== false
-            || strpos($responseText, '<HTML>') !== false
-            || strpos($responseText, '|') === false
-            || in_array($responseText, array_keys(Error::$messages))
-        ) {
-            throw new RuntimeException($this->getErrorMessage($responseText) ?: "Unknown error: `{$responseText}`.");
+        if (strpos($responseText, 'OK|') !== false) {
+            $this->lastCaptchaId = explode("|", $responseText)[1];
+            return $this->lastCaptchaId;
         }
 
-        $this->lastCaptchaId = explode("|", $responseText)[1];
-
-        return $this->lastCaptchaId;
+        throw new RuntimeException($this->getErrorMessage($responseText) ?: "Unknown error: `{$responseText}`.");
     }
 
     /**
