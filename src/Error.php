@@ -23,7 +23,7 @@ class Error
     const IP_NOT_ALLOWED                = 'ERROR_IP_NOT_ALLOWED';
     const IP_BANNED                     = 'ERROR_IP_BANNED';
 
-    static $messages = [
+    static public $messages = [
         self::KEY_DOES_NOT_EXIST       => 'Использован несуществующий key.',
         self::WRONG_ID_FORMAT          => 'Неверный формат ID капчи. ID должен содержать только цифры.',
         self::WRONG_USER_KEY           => 'Не верный формат параметра key, должно быть 32 символа',
