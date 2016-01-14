@@ -34,14 +34,19 @@ composer require gladyshev/rucaptcha-client
 ```php
 use Rucaptcha\Client;
 
-/* Configutation */
+/* Constructor */
+
+void Client::__construct($apiKey, array $options = []);
+
+
+/* Configuration */
 
 void Client::setOptions(array $options);
 void Client::setHttpClient(GuzzleHttp\ClientInterface $client);
 void Client::setLogger(Psr\Log\LoggerInterface $logger);
 
 
-/* Captcha solving */
+/* Solving captcha */
 
 string Client::recognize(string $content, array $extra = []);
 string Client::recognizeFile(string $path, array $extra = []);
