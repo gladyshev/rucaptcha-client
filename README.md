@@ -6,21 +6,55 @@ PHP-клиент [rucaptcha.com](https://rucaptcha.com/) на базе [GuzzleHt
 [![Code Coverage](https://scrutinizer-ci.com/g/gladyshev/rucaptcha-client/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/gladyshev/rucaptcha-client/?branch=master)
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/gladyshev/rucaptcha-client/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/gladyshev/rucaptcha-client/?branch=master)
 
-### Пример ###
+### Примеры ###
 
 ```php
+/* Simple */
+
 $rucaptcha = new Rucaptcha\Client('YOUR_API_KEY');
 
-$captchaText = $rucaptcha->recognizeFile('/captcha.png');
+$captchaText = $rucaptcha->recognizeFile('captcha.png');
 print_r($captchaText);
+```
+```php
+/* Async example */
+
+$rucaptcha = new Rucaptcha\Client('YOUR_API_KEY', [
+    'verbose' => true
+]);
+
+$taskIds = [];
+
+$taskIds[] = $rucaptcha->sendCaptcha(file_get_contents('captcha1.png'));
+$taskIds[] = $rucaptcha->sendCaptcha(file_get_contents('captcha2.jpg'));
+$taskIds[] = $rucaptcha->sendCaptcha(file_get_contents('captcha3.gif'), [
+    Extra::NUMERIC => 1
+]);
+
+$results = []
+
+while (count($taskIds) > 0) {
+    // Wait 5 sec
+    sleep(5);
+
+    // Try get results
+    foreach ($taskIds as $id) {
+        $results[$id] = $this->getCaptchaResult($id);
+
+        // false == is not ready, on error we've got an exception
+        if ($results[$id] === false) {
+            continue;
+        } else {
+            unset($taskIds[$id]);
+        }
+    }
+}
+
+print_r($results);
 ```
 
 ### Установка ###
 
-```bash
-composer require gladyshev/rucaptcha-client
-```
-или
 ```php
 "require": {
   ...
