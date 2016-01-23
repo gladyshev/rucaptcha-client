@@ -1,6 +1,6 @@
 rucaptcha-client
 ================
-PHP-клиент [rucaptcha.com](http://rucapcha.com) на базе [GuzzleHttp](https://github.com/guzzle/guzzle).
+PHP-клиент [rucaptcha.com](https://rucaptcha.com/) на базе [GuzzleHttp](https://github.com/guzzle/guzzle).
 
 [![Build Status](https://travis-ci.org/gladyshev/rucaptcha-client.svg?branch=master)](https://travis-ci.org/gladyshev/rucaptcha-client)
 [![Code Coverage](https://scrutinizer-ci.com/g/gladyshev/rucaptcha-client/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/gladyshev/rucaptcha-client/?branch=master)
