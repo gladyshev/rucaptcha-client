@@ -28,19 +28,21 @@ $taskIds = [];
 $taskIds[] = $rucaptcha->sendCaptcha(file_get_contents('captcha1.png'));
 $taskIds[] = $rucaptcha->sendCaptcha(file_get_contents('captcha2.jpg'));
 $taskIds[] = $rucaptcha->sendCaptcha(file_get_contents('captcha3.gif'), [
-    Extra::NUMERIC => 1
+    Rucaptcha\Extra::NUMERIC => 1
 ]);
 
-$results = []
+$results = [];
 
 while (count($taskIds) > 0) {
+
     // Wait 5 sec
     sleep(5);
-
+    
     // Try get results
     foreach ($taskIds as $id) {
+    
         $results[$id] = $this->getCaptchaResult($id);
-
+        
         // false == is not ready, on error we've got an exception
         if ($results[$id] === false) {
             continue;
