@@ -1,7 +1,7 @@
 {
   "name": "gladyshev/rucaptcha-client",
   "keywords": ["php", "library", "client", "captcha recognition", "rucaptcha"],
-  "description" : "This is a modern RuCaptcha API PHP-client based on GuzzleHttp framework.",
+  "description" : "This is a modern full-featured RuCaptcha PHP-client based on GuzzleHttp framework.",
   "type": "library",
   "license": "MIT",
   "authors": [
