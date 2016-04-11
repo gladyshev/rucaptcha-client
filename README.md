@@ -39,15 +39,15 @@ while (count($taskIds) > 0) {
     sleep(5);
     
     // Try get results
-    foreach ($taskIds as $id) {
+    foreach ($taskIds as $i=>$taskId) {
     
-        $results[$id] = $this->getCaptchaResult($id);
+        $results[$taskId] = $this->getCaptchaResult($taskId);
         
         // false == is not ready, on error we've got an exception
-        if ($results[$id] === false) {
+        if ($results[$taskId] === false) {
             continue;
         } else {
-            unset($taskIds[$id]);
+            unset($taskIds[$i]);
         }
     }
 }
