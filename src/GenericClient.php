@@ -107,7 +107,7 @@ class GenericClient implements LoggerAwareInterface
         $content = '';
 
         while (!$file->eof()) {
-            $content .=  $file->fgets();
+            $content .= $file->fgets();
         }
 
         return $this->recognize($content, $extra);
@@ -241,7 +241,7 @@ class GenericClient implements LoggerAwareInterface
         if ($this->logger === null)
         {
             $defaultLogger = new Logger;
-            $defaultLogger->verbose =& $this->verbose;
+            $defaultLogger->verbose = & $this->verbose;
 
             $this->setLogger($defaultLogger);
         }

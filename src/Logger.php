@@ -22,7 +22,7 @@ class Logger extends AbstractLogger
     {
         if ($this->verbose)
         {
-            echo date("d/m/y H:i:s") . ' ['.$level.'] ' . $message . PHP_EOL;
+            echo date("d/m/y H:i:s") . ' [' . $level . '] ' . $message . PHP_EOL;
         }
     }
 }
