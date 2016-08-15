@@ -19,7 +19,7 @@ class Client extends GenericClient
 
     /**
      * Your application ID in Rucaptcha catalog.
-     * That value `1013` is ID of this library, set it in false if you want to turn off sending any id.
+     * The value `1013` is ID of this library. Set in false if you want to turn off sending any ID.
      * @see https://rucaptcha.com/software/view/php-api-client
      * @var string
      */
