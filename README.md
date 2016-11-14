@@ -17,7 +17,7 @@ $captchaText = $rucaptcha->recognizeFile('captcha.png');
 print_r($captchaText);
 ```
 ```php
-/* Async example */
+/* Advanced example */
 
 $rucaptcha = new Rucaptcha\Client('YOUR_API_KEY', [
     'verbose' => true
@@ -72,30 +72,34 @@ use Rucaptcha\Client;
 
 /* Constructor */
 
-void Client::__construct($apiKey, array $options = []);
+Client::__construct($apiKey, array $options = []) : void;
 
 
 /* Configuration */
 
-void Client::setOptions(array $options);
-void Client::setHttpClient(GuzzleHttp\ClientInterface $client);
-void Client::setLogger(Psr\Log\LoggerInterface $logger);
+Client::setOptions(array $options) : void;
+
+// Guzzle PSR-7 HTTP-client
+Client::setHttpClient(GuzzleHttp\ClientInterface $client) : void;
+
+// PSR-3 logger
+Client::setLogger(Psr\Log\LoggerInterface $logger) : void;
 
 
-/* Solving captcha */
+/* Solving captcha methods */
 
-string Client::recognize(string $content, array $extra = []);
-string Client::recognizeFile(string $path, array $extra = []);
-string Client::sendCaptcha(string $content, array $extra = []);
-string Client::getCaptchaResult(string $captchaId);
+Client::recognize(string $content, array $extra = []) : string;
+Client::recognizeFile(string $path, array $extra = []) : string;
+Client::sendCaptcha(string $content, array $extra = []) : string;
+Client::getCaptchaResult(string $captchaId) : string;
 
 
 /* Other */
 
-string Client::getLastCaptchaId();
-string Client::getBalance();
-bool Client::badCaptcha(string $captchaId);
-array Client::getLoad(array $paramsList = []);
+Client::getLastCaptchaId() : string;
+Client::getBalance() : string;
+Client::badCaptcha(string $captchaId) : bool;
+Client::getLoad(array $paramsList = []) : array;
 ```
 
 
