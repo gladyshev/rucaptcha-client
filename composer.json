@@ -1,7 +1,7 @@
 {
   "name": "gladyshev/rucaptcha-client",
-  "keywords": ["php", "library", "client", "captcha recognition", "rucaptcha"],
-  "description" : "This is a modern full-featured RuCaptcha PHP-client.",
+  "keywords": ["captcha recognition", "rucaptcha"],
+  "description": "This is a modern full-featured RuCaptcha PHP-client with PSR-7 and PSR-3 support.",
   "type": "library",
   "license": "MIT",
   "authors": [
@@ -21,12 +21,12 @@
   },
   "autoload": {
     "psr-4": {
-      "Rucaptcha\\" : "src/"
+      "Rucaptcha\\": "src/"
     }
   },
   "autoload-dev": {
     "psr-4": {
-      "Rucaptcha\\Tests\\" : "tests/"
+      "Rucaptcha\\Tests\\": "tests/"
     }
   }
 }
