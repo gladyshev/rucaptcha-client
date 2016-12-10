@@ -52,7 +52,7 @@ class Client extends GenericClient
      */
     public function badCaptcha($captchaId)
     {
-        $response = $this->getHttpClient()->request('GET', "/res.php?action=reportbad&id={$captchaId}");
+        $response = $this->getHttpClient()->request('GET', "/res.php?key={$this->apiKey}&action=reportbad&id={$captchaId}");
         if ($response->getBody()->__toString() === self::STATUS_OK_REPORT_RECORDED) {
             return true;
         }
