@@ -121,21 +121,11 @@ class GenericClient implements LoggerAwareInterface
      */
     public function recognize($content, array $extra = [])
     {
-        /* Send image to recognition server */
-
-        $this->getLogger()->info("Try send captcha image on {$this->serverBaseUri}/in.php");
-
         $captchaId = $this->sendCaptcha($content, $extra);
-
-
-        /* Get captcha recognition result */
-
-        $this->getLogger()->info("Sending success. Got captcha id `$captchaId`.");
-
         $startTime = time();
 
-        while (true) {
-
+        while (true)
+        {
             $this->getLogger()->info("Waiting {$this->rTimeout} sec.");
 
             sleep($this->rTimeout);
@@ -150,7 +140,7 @@ class GenericClient implements LoggerAwareInterface
                 continue;
             }
 
-            $this->getLogger()->info("Got OK response: `{$result}`. Elapsed " . (time() - $startTime) . ' sec.');
+            $this->getLogger()->info("Elapsed " . (time()-$startTime) . " second(s).");
 
             return $result;
         }
@@ -166,6 +156,8 @@ class GenericClient implements LoggerAwareInterface
      */
     public function sendCaptcha($content, array $extra = [])
     {
+        $this->getLogger()->info("Try send captcha image on {$this->serverBaseUri}/in.php");
+
         $response = $this->getHttpClient()->request('POST', '/in.php', [
             RequestOptions::HEADERS => [
                 'Content-Type' => 'application/x-www-form-urlencoded'
@@ -181,6 +173,7 @@ class GenericClient implements LoggerAwareInterface
 
         if (strpos($responseText, 'OK|') !== false) {
             $this->lastCaptchaId = explode("|", $responseText)[1];
+            $this->getLogger()->info("Sending success. Got captcha id `{$this->lastCaptchaId}`.");
             return $this->lastCaptchaId;
         }
 
@@ -203,6 +196,7 @@ class GenericClient implements LoggerAwareInterface
         }
 
         if (strpos($responseText, 'OK|') !== false) {
+            $this->getLogger()->info("Got OK response: `{$responseText}`.");
             return html_entity_decode(trim(explode('|', $responseText)[1]));
         }
 
