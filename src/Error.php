@@ -22,6 +22,7 @@ class Error
     const IMAGE_TYPE_NOT_SUPPORTED      = 'ERROR_IMAGE_TYPE_NOT_SUPPORTED';
     const IP_NOT_ALLOWED                = 'ERROR_IP_NOT_ALLOWED';
     const IP_BANNED                     = 'ERROR_IP_BANNED';
+    const ERROR_IP_ADDRES               = 'ERROR_IP_ADDRES';
 
     static public $messages = [
         self::KEY_DOES_NOT_EXIST       => 'Использован несуществующий key.',
@@ -38,5 +39,6 @@ class Error
         self::IMAGE_TYPE_NOT_SUPPORTED => 'Сервер не может определить тип файла капчи.',
         self::IP_NOT_ALLOWED           => 'В Вашем аккаунте настроено ограничения по IP с которых можно делать запросы. И IP, с которого пришёл данный запрос не входит в список разрешённых.',
         self::IP_BANNED                => 'IP-адрес, с которого пришёл запрос заблокирован из-за частых обращений с различными неверными ключами. Блокировка снимается через час.',
+        self::ERROR_IP_ADDRES          => 'Некорректный IP-адрес'
     ];
 }
