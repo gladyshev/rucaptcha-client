@@ -22,4 +22,5 @@ class Extra
     const TEXTINSTRUCTIONS = 'textinstructions';
     const TEXTCAPTCHA = 'textcaptcha';
     const CONTENT_TYPE = 'content_type';
+    const PINGBACK = 'pingback';
 }

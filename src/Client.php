@@ -37,6 +37,38 @@ class Client extends GenericClient
     }
 
     /**
+     * Bulk captcha result.
+     *
+     * @param int[] $captchaIds     # Captcha task Ids array
+     * @return string[]             # Array $captchaId => $captchaText or false if is not ready
+     * @throws RuntimeException
+     */
+    public function getCaptchaResultBulk(array $captchaIds)
+    {
+        $response = $this->getHttpClient()->request('GET', '/res.php?' . http_build_query([
+                'key' => $this->apiKey,
+                'action' => 'get',
+                'ids' => join(',', $captchaIds)
+            ]));
+
+        $captchaTexts = $response->getBody()->__toString();
+
+        $this->getLogger()->info("Got bulk response: `{$captchaTexts}`.");
+
+        $captchaTexts = explode("|", $captchaTexts);
+
+        $result = [];
+
+        foreach ($captchaTexts as $index => $captchaText) {
+            $captchaText = html_entity_decode(trim($captchaText));
+            $result[$captchaIds[$index]] =
+                ($captchaText == self::STATUS_CAPTCHA_NOT_READY) ? false : $captchaText;
+        }
+
+        return $result;
+    }
+
+    /**
      * @return string
      */
     public function getBalance()

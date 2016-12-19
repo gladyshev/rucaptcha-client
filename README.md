@@ -1,6 +1,6 @@
 rucaptcha-client
 ================
-PHP-клиент сервиса распознавания капчи [rucaptcha.com](https://rucaptcha.com/).
+PHP-клиент сервиса распознавания капчи [rucaptcha.com](https://rucaptcha.com?from=1342124).
 
 [![Build Status](https://travis-ci.org/gladyshev/rucaptcha-client.svg?branch=master)](https://travis-ci.org/gladyshev/rucaptcha-client)
 [![Code Coverage](https://scrutinizer-ci.com/g/gladyshev/rucaptcha-client/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/gladyshev/rucaptcha-client/?branch=master)
@@ -33,17 +33,17 @@ $taskIds[] = $rucaptcha->sendCaptcha(file_get_contents('captcha3.gif'), [
 
 $results = [];
 
-while (count($taskIds) > 0) {
-
-    // Wait 5 sec
-    sleep(5);
-    
+while (count($taskIds) > 0) 
+{
     // Try get results
-    foreach ($taskIds as $i=>$taskId) {
-    
-        $results[$taskId] = $this->getCaptchaResult($taskId);
+    foreach ($taskIds as $i=>$taskId) 
+    {    
+        // Wait 5 sec
+        sleep(5);
         
-        // false == is not ready, on error we've got an exception
+        $results[$taskId] = $rucaptcha->getCaptchaResult($taskId);
+        
+        // false === is not ready, on error we've got an exception
         if ($results[$taskId] === false) {
             continue;
         } else {
@@ -60,7 +60,7 @@ print_r($results);
 ```php
 "require": {
   ...
-  "gladyshev/rucaptcha-client": "1.0.*"
+  "gladyshev/rucaptcha-client": "~1.0"
   ...
 }
 ```

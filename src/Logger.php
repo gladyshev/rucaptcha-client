@@ -20,9 +20,8 @@ class Logger extends AbstractLogger
      */
     public function log($level, $message, array $context = [])
     {
-        if ($this->verbose)
-        {
-            echo date("d/m/y H:i:s") . ' [' . $level . '] ' . $message . PHP_EOL;
+        if ($this->verbose) {
+            echo date("d/m/y H:i:s", time()) . ' [' . $level . '] ' . $message . PHP_EOL;
         }
     }
 }
