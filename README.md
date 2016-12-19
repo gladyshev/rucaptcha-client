@@ -1,6 +1,6 @@
 rucaptcha-client
 ================
-PHP-клиент сервиса распознавания капчи [rucaptcha.com](https://rucaptcha.com/).
+PHP-клиент сервиса распознавания капчи [rucaptcha.com](https://rucaptcha.com?from=1342124).
 
 [![Build Status](https://travis-ci.org/gladyshev/rucaptcha-client.svg?branch=master)](https://travis-ci.org/gladyshev/rucaptcha-client)
 [![Code Coverage](https://scrutinizer-ci.com/g/gladyshev/rucaptcha-client/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/gladyshev/rucaptcha-client/?branch=master)
