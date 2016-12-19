@@ -91,8 +91,8 @@ Client::setLogger(Psr\Log\LoggerInterface $logger) : void;
 Client::recognize(string $content, array $extra = []) : string;
 Client::recognizeFile(string $path, array $extra = []) : string;
 Client::sendCaptcha(string $content, array $extra = []) : string;
-Client::getCaptchaResult(string $captchaId) : string;
-Client::getCaptchaResultBulk(array $captchaId) : array;
+Client::getCaptchaResult(int $captchaId) : string;
+Client::getCaptchaResultBulk(array $captchaIds) : array;
 
 /* Other */
 
