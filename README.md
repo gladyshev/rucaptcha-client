@@ -92,7 +92,7 @@ Client::recognize(string $content, array $extra = []) : string;
 Client::recognizeFile(string $path, array $extra = []) : string;
 Client::sendCaptcha(string $content, array $extra = []) : string;
 Client::getCaptchaResult(string $captchaId) : string;
-
+Client::getCaptchaResultBulk(array $captchaId) : array;
 
 /* Other */
 
