@@ -14,7 +14,7 @@ PHP-клиент сервиса распознавания капчи [rucaptcha
 $rucaptcha = new Rucaptcha\Client('YOUR_API_KEY');
 
 $captchaText = $rucaptcha->recognizeFile('captcha.png');
-print_r($captchaText);
+print_r($captchaText); // h54g6
 ```
 ```php
 /* Advanced example */
