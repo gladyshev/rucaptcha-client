@@ -1,5 +1,7 @@
-1.0.5 - Add codesniffer and fix codestyle
+1.0.5 - Add getLoad method example
+      - Add getCaptchaResultWithCostMethod
+      - Add codesniffer and fix codestyle
       - Add changelog
-      - Update phpunit
+      - Update phpunit to 5.7
       - Get captcha with cost method
       - Travis php-5.5 testing off
