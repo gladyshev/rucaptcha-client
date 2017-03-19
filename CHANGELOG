@@ -1,5 +1,5 @@
 1.0.5 - Add getLoad method example
-      - Add getCaptchaResultWithCostMethod
+      - Add getCaptchaResultWithCost method
       - Add codesniffer and fix codestyle
       - Add changelog
       - Update phpunit to 5.7
