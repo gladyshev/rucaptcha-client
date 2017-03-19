@@ -5,7 +5,6 @@
 
 namespace Rucaptcha;
 
-
 class Error
 {
     const KEY_DOES_NOT_EXIST            = 'ERROR_KEY_DOES_NOT_EXIST';

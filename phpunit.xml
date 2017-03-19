@@ -1,15 +1,19 @@
-<phpunit
-        bootstrap="./vendor/autoload.php"
-        verbose="true"
-        backupGlobals="false"
-        colors="true"
-        convertErrorsToExceptions="true"
-        convertNoticesToExceptions="true"
-        convertWarningsToExceptions="true"
->
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         colors="true">
     <testsuites>
-        <testsuite name="Rucaptcha API client unit tests">
-            <directory suffix="Test.php">./tests/</directory>
+        <testsuite name="Rucaptcha unit tests">
+            <directory>./tests</directory>
         </testsuite>
     </testsuites>
+    <filter>
+        <whitelist>
+            <directory suffix=".php">./src</directory>
+            <exclude>
+                <directory>./src/Exception</directory>
+            </exclude>
+        </whitelist>
+    </filter>
 </phpunit>

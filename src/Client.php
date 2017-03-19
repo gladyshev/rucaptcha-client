@@ -1,13 +1,15 @@
 <?php
-/**
- * @author Dmitry Gladyshev <deel@email.ru>
- */
 
 namespace Rucaptcha;
 
-
 use Rucaptcha\Exception\RuntimeException;
 
+/**
+ * Class Client
+ *
+ * @package Rucaptcha
+ * @author Dmitry Gladyshev <deel@email.ru>
+ */
 class Client extends GenericClient
 {
     const STATUS_OK_REPORT_RECORDED = 'OK_REPORT_RECORDED';
@@ -84,7 +86,10 @@ class Client extends GenericClient
      */
     public function badCaptcha($captchaId)
     {
-        $response = $this->getHttpClient()->request('GET', "/res.php?key={$this->apiKey}&action=reportbad&id={$captchaId}");
+        $response = $this
+            ->getHttpClient()
+            ->request('GET', "/res.php?key={$this->apiKey}&action=reportbad&id={$captchaId}");
+
         if ($response->getBody()->__toString() === self::STATUS_OK_REPORT_RECORDED) {
             return true;
         }
@@ -92,26 +97,62 @@ class Client extends GenericClient
     }
 
     /**
-     * @param array $paramsList
+     * @param string|array $paramsList
      * @return array
      */
-    public function getLoad(array $paramsList = ['waiting', 'load', 'minbid', 'averageRecognitionTime'])
+    public function getLoad($paramsList = ['waiting', 'load', 'minbid', 'averageRecognitionTime'])
     {
-        $response = $this->getHttpClient()->request('GET', "/load.php");
-        $responseText = $response->getBody()->__toString();
+        $parser = $this->getLoadXml();
+
+        if (is_string($paramsList)) {
+            return $parser->$paramsList->__toString();
+        }
+
         $statusData = [];
 
         foreach ($paramsList as $item) {
-            // Fast parse tags
-            $value = substr($responseText,
-                strpos($responseText, '<' . $item . '>') + mb_strlen('<' . $item . '>'),
-                strpos($responseText, '</' . $item . '>') - strpos($responseText, '<' . $item . '>') - mb_strlen('<' . $item . '>')
-            );
-
-            if ($value !== false) {
-                $statusData[$item] = $value;
-            }
+            $statusData[$item] = $parser->$item->__toString();
         }
+
         return $statusData;
+    }
+
+    /**
+     * @return \SimpleXMLElement
+     */
+    public function getLoadXml()
+    {
+        $response = $this
+            ->getHttpClient()
+            ->request('GET', "/load.php");
+
+        return new \SimpleXMLElement($response->getBody()->__toString());
+    }
+
+    /**
+     * @param string $captchaId     # Captcha task ID
+     * @return array | false        # Solved captcha and cost array or false if captcha is not ready
+     * @throws RuntimeException
+     */
+    public function getCaptchaResultWithCost($captchaId)
+    {
+        $response = $this->getHttpClient()->request('GET', "/res.php?key={$this->apiKey}&action=get2&id={$captchaId}");
+
+        $responseText = $response->getBody()->__toString();
+
+        if ($responseText === self::STATUS_CAPTCHA_NOT_READY) {
+            return false;
+        }
+
+        if (strpos($responseText, 'OK|') !== false) {
+            $this->getLogger()->info("Got OK response: `{$responseText}`.");
+            $data = explode('|', $responseText);
+            return [
+                'captcha' => html_entity_decode(trim($data[1])),
+                'cost' => html_entity_decode(trim($data[2])),
+            ];
+        }
+
+        throw new RuntimeException($this->getErrorMessage($responseText) ?: "Unknown error: `{$responseText}`.");
     }
 }

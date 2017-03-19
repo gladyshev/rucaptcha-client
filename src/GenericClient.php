@@ -5,7 +5,6 @@
 
 namespace Rucaptcha;
 
-
 use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\RequestOptions;
@@ -124,8 +123,7 @@ class GenericClient implements LoggerAwareInterface
         $captchaId = $this->sendCaptcha($content, $extra);
         $startTime = time();
 
-        while (true)
-        {
+        while (true) {
             $this->getLogger()->info("Waiting {$this->rTimeout} sec.");
 
             sleep($this->rTimeout);
@@ -232,8 +230,7 @@ class GenericClient implements LoggerAwareInterface
      */
     protected function getLogger()
     {
-        if ($this->logger === null)
-        {
+        if ($this->logger === null) {
             $defaultLogger = new Logger;
             $defaultLogger->verbose = & $this->verbose;
 

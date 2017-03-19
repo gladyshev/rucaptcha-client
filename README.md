@@ -100,6 +100,7 @@ Client::getLastCaptchaId() : string;
 Client::getBalance() : string;
 Client::badCaptcha(string $captchaId) : bool;
 Client::getLoad(array $paramsList = []) : array;
+Client::getLoadXml(array $paramsList = []) : \SimpleXmlElement;
 ```
 
 

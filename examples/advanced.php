@@ -15,17 +15,15 @@ $taskIds[] = $rucaptcha->sendCaptcha(file_get_contents(__DIR__.'/data/yandex.gif
 
 $results = [];
 
-while (count($taskIds) > 0)
-{
+while (count($taskIds) > 0) {
     // Try get results
-    foreach ($taskIds as $i=>$taskId)
-    {
+    foreach ($taskIds as $i => $taskId) {
         // Wait 5 sec
         sleep(5);
 
         $results[$taskId] = $rucaptcha->getCaptchaResult($taskId);
 
-        // false === is not ready, on error we've got an exception
+        // false === is not ready or exception on error
         if ($results[$taskId] === false) {
             continue;
         } else {

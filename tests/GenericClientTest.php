@@ -11,11 +11,12 @@ use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
+use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Rucaptcha\Error;
 use Rucaptcha\GenericClient;
 
-class GenericClientTest extends \PHPUnit_Framework_TestCase
+class GenericClientTest extends TestCase
 {
     public function testGetHttpClientMustReturnClientInterfaceInstance()
     {

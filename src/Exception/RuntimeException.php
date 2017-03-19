@@ -5,7 +5,6 @@
 
 namespace Rucaptcha\Exception;
 
-
 class RuntimeException extends RucaptchaException
 {
 }
