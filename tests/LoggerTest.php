@@ -6,11 +6,11 @@
 namespace Rucaptcha\tests;
 
 
-use PHPUnit_Framework_TestCase;
+use PHPUnit\Framework\TestCase;
 use Psr\Log\LogLevel;
 use Rucaptcha\Logger;
 
-class LoggerTest extends PHPUnit_Framework_TestCase
+class LoggerTest extends TestCase
 {
     /**
      * @dataProvider providerLevelMessages

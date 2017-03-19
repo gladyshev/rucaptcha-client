@@ -5,15 +5,13 @@
 
 namespace Rucaptcha;
 
-
 use Rucaptcha\Exception\InvalidArgumentException;
 
 trait ConfigurableTrait
 {
     public function setOptions(array $options, $ignoreMissingOptions = false)
     {
-        foreach ($options as $option => $value)
-        {
+        foreach ($options as $option => $value) {
             $setter = 'set' . ucfirst($option);
 
             if (method_exists($this, $setter)) {

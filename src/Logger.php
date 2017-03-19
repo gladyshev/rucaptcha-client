@@ -5,7 +5,6 @@
 
 namespace Rucaptcha;
 
-
 use Psr\Log\AbstractLogger;
 
 class Logger extends AbstractLogger

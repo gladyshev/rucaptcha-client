@@ -5,10 +5,10 @@
 
 namespace Rucaptcha\tests;
 
-use PHPUnit_Framework_TestCase;
+use PHPUnit\Framework\TestCase;
 use Rucaptcha\ConfigurableTrait;
 
-class ConfigurableTraitTest extends PHPUnit_Framework_TestCase
+class ConfigurableTraitTest extends TestCase
 {
     /**
      * @expectedException \Rucaptcha\Exception\InvalidArgumentException

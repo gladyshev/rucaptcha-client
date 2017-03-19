@@ -15,8 +15,7 @@ $taskIds[] = $rucaptcha->sendCaptcha(file_get_contents(__DIR__.'/data/yandex.gif
 
 $results = [];
 
-while (true)
-{
+while (true) {
     // Wait 5 sec
     sleep(5);
 
