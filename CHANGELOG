@@ -1,3 +1,7 @@
+1.1.0 - Rename RucaptchaException to Exception
+      - Resolve account limit codes on error response
+      - Simplify error messages
+
 1.0.6 - Add addPingback method
       - Add getPingbacks method
       - Add deletePingback method

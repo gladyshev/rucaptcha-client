@@ -13,7 +13,7 @@ use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 use Rucaptcha\Exception\ErrorResponseException;
 use Rucaptcha\Exception\InvalidArgumentException;
-use Rucaptcha\Exception\RucaptchaException;
+use Rucaptcha\Exception\Exception;
 use Rucaptcha\Exception\RuntimeException;
 use SplFileObject;
 
@@ -94,7 +94,7 @@ class GenericClient implements LoggerAwareInterface
      * @param string $path
      * @param array $extra
      * @return string
-     * @throws RucaptchaException
+     * @throws Exception
      */
     public function recognizeFile($path, array $extra = [])
     {
@@ -199,7 +199,7 @@ class GenericClient implements LoggerAwareInterface
             return html_entity_decode(trim(explode('|', $responseText)[1]));
         }
 
-        throw new ErrorResponseException($this->getErrorMessage($responseText) ?: "Unknown error: `{$responseText}`.");
+        throw new ErrorResponseException($this->getErrorMessage($responseText) ?: $responseText);
     }
 
     /**

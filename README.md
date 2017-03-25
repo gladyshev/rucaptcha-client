@@ -7,7 +7,21 @@ PHP-обёртка для сервиса распознавания капчи [
 [![Code Coverage](https://scrutinizer-ci.com/g/gladyshev/rucaptcha-client/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/gladyshev/rucaptcha-client/?branch=master)
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/gladyshev/rucaptcha-client/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/gladyshev/rucaptcha-client/?branch=master)
 
-### Примеры ###
+### Install 
+
+```bash
+$ composer require --prefer-dist gladyshev/rucaptcha-client "~1.1"
+```
+or 
+```php
+"require": {
+  ...
+  "gladyshev/rucaptcha-client": "~1.1"
+  ...
+}
+```
+
+### Examples
 
 ```php
 /* Simple */
@@ -56,17 +70,7 @@ while (count($taskIds) > 0)
 print_r($results);
 ```
 
-### Установка ###
-
-```php
-"require": {
-  ...
-  "gladyshev/rucaptcha-client": "~1.0"
-  ...
-}
-```
-
-### Методы `Rucaptcha\Client` ###
+### Methods of `Rucaptcha\Client`
 
 ```php
 use Rucaptcha\Client;
@@ -111,8 +115,7 @@ Client::getLoad(array $paramsList = []) : array;
 Client::getLoadXml() : \SimpleXmlElement;
 ```
 
-
-### Опции клиента ###
+### Library options
 
 Параметр | Тип | По умолчанию | Возможные значения
 ---| --- | --- | ---
@@ -123,11 +126,11 @@ Client::getLoadXml() : \SimpleXmlElement;
 `serverBaseUri`| string | 'http://rucaptcha.com' | Базовый URI сервиса
 
 
-### Параметры распознавания капчи `$extra` ###
+### Solving options `$extra`
 
 Параметр | Тип | По умолчанию | Возможные значения
 ---| --- | --- | ---
-`phrase` | integer  | 0 | 0 = одно слово <br/> 1 = капча имеет два слова
+`phrase` | integer  | 0 | 0 = одно слово <br> 1 = капча имеет два слова
 `regsense`| integer	| 0 | 0 = регистр ответа не имеет значения <br>  1 = регистр ответа имеет значение
 `question`| integer	 | 0 | 0 = параметр не задействован <br>  1 = на изображении задан вопрос, работник должен написать ответ
 `numeric` | integer | 0 | 0 = параметр не задействован <br>  1 = капча состоит только из цифр<br>  2 = Капча состоит только из букв<br>  3 = Капча состоит либо только из цифр, либо только из букв.
@@ -136,7 +139,7 @@ Client::getLoadXml() : \SimpleXmlElement;
 `max_len` | 1..20 | 0 | 0 = параметр не задействован<br>  1..20 = максимальное количество знаков в ответе
 `is_russian` | integer | 0 | параметр больше не используется, т.к. он означал "слать данную капчу русским исполнителям", а в системе находятся только русскоязычные исполнители. Смотрите новый параметр language, однозначно обозначающий язык капчи
 `soft_id` | string | | ID разработчика приложения. Разработчику приложения отчисляется 10% от всех капч, пришедших из его приложения.
-`language` | integer | 0 | 0 = параметр не задействован <br> 1 = на капче только кириллические буквы <br>2 = на капче только латинские буквы
+`language` | integer | 0 | 0 = параметр не задействован <br> 1 = на капче только кириллические буквы <br> 2 = на капче только латинские буквы
 `header_acao` | integer	| 0 | 0 = значение по умолчанию <br> 1 = in.php передаст Access-Control-Allow-Origin: * параметр в заголовке ответа. (Необходимо для кросс-доменных AJAX запросов в браузерных приложениях. Работает также для res.php.)
 `textinstructions` | string |  |Текст, который будет показан работнику. Может содержать в себе инструкции по разгадке капчи. Ограничение - 140 символов. Текст необходимо слать в кодировке UTF-8.
 `textcaptcha` | string | | Текстовая капча. Картинка при этом не загружается, работник получает только текст и вводит ответ на этот текст. Ограничение - 140 символов. Текст необходимо слать в кодировке UTF-8.

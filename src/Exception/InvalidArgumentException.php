@@ -5,6 +5,6 @@
 
 namespace Rucaptcha\Exception;
 
-class InvalidArgumentException extends RucaptchaException
+class InvalidArgumentException extends Exception
 {
 }

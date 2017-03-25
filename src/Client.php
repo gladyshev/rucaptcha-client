@@ -3,7 +3,6 @@
 namespace Rucaptcha;
 
 use Rucaptcha\Exception\ErrorResponseException;
-use Rucaptcha\Exception\RuntimeException;
 
 /**
  * Class Client
@@ -23,6 +22,7 @@ class Client extends GenericClient
     /**
      * Your application ID in Rucaptcha catalog.
      * The value `1013` is ID of this library. Set in false if you want to turn off sending any ID.
+     *
      * @see https://rucaptcha.com/software/view/php-api-client
      * @var string
      */
@@ -42,9 +42,9 @@ class Client extends GenericClient
     /**
      * Bulk captcha result.
      *
-     * @param int[] $captchaIds     # Captcha task Ids array
-     * @return string[]             # Array $captchaId => $captchaText or false if is not ready
-     * @throws RuntimeException
+     * @param int[] $captchaIds         # Captcha task Ids array
+     * @return string[]                 # Array $captchaId => $captchaText or false if is not ready
+     * @throws ErrorResponseException
      */
     public function getCaptchaResultBulk(array $captchaIds)
     {
@@ -78,16 +78,19 @@ class Client extends GenericClient
      */
     public function getBalance()
     {
-        $response = $this->getHttpClient()->request('GET', "/res.php?key={$this->apiKey}&action=getbalance");
+        $response = $this
+            ->getHttpClient()
+            ->request('GET', "/res.php?key={$this->apiKey}&action=getbalance");
+
         return $response->getBody()->__toString();
     }
 
     /**
      * Report of wrong recognition.
      *
-     * @param $captchaId
+     * @param string $captchaId
      * @return bool
-     * @throws RuntimeException
+     * @throws ErrorResponseException
      */
     public function badCaptcha($captchaId)
     {
@@ -100,7 +103,11 @@ class Client extends GenericClient
         if ($responseText === self::STATUS_OK_REPORT_RECORDED) {
             return true;
         }
-        throw new ErrorResponseException($this->getErrorMessage($responseText) ?: "Unknown error: `{$responseText}`.");
+
+        throw new ErrorResponseException(
+            $this->getErrorMessage($responseText) ?: $responseText,
+            $this->getErrorCode($responseText) ?: 0
+        );
     }
 
     /**
@@ -143,7 +150,7 @@ class Client extends GenericClient
     /**
      * @param string $captchaId     # Captcha task ID
      * @return array | false        # Solved captcha and cost array or false if captcha is not ready
-     * @throws RuntimeException
+     * @throws ErrorResponseException
      */
     public function getCaptchaResultWithCost($captchaId)
     {
@@ -166,13 +173,18 @@ class Client extends GenericClient
             ];
         }
 
-        throw new ErrorResponseException($this->getErrorMessage($responseText) ?: "Unknown error: `{$responseText}`.");
+        throw new ErrorResponseException(
+            $this->getErrorMessage($responseText) ?: $responseText,
+            $this->getErrorCode($responseText) ?: 0
+        );
     }
 
     /**
+     * Add pingback url to rucaptcha whitelist.
+     *
      * @param string $url
      * @return bool                     # true if added and exception if fail
-     * @throws RuntimeException
+     * @throws ErrorResponseException
      */
     public function addPingback($url)
     {
@@ -185,12 +197,18 @@ class Client extends GenericClient
         if ($responseText === self::STATUS_OK) {
             return true;
         }
-        throw new ErrorResponseException($this->getErrorMessage($responseText) ?: "Unknown error: `{$responseText}`.");
+
+        throw new ErrorResponseException(
+            $this->getErrorMessage($responseText) ?: $responseText,
+            $this->getErrorCode($responseText) ?: 0
+        );
     }
 
     /**
-     * @return string[]
-     * @throws RuntimeException
+     * Returns pingback whitelist items.
+     *
+     * @return string[]                 # List of urls
+     * @throws ErrorResponseException
      */
     public function getPingbacks()
     {
@@ -206,13 +224,18 @@ class Client extends GenericClient
             return empty($data[1]) ? [] : array_values($data);
         }
 
-        throw new ErrorResponseException($this->getErrorMessage($responseText) ?: "Unknown error: `{$responseText}`.");
+        throw new ErrorResponseException(
+            $this->getErrorMessage($responseText) ?: $responseText,
+            $this->getErrorCode($responseText) ?: 0
+        );
     }
 
     /**
+     * Remove pingback url from whitelist.
+     *
      * @param string $uri
      * @return bool
-     * @throws RuntimeException
+     * @throws ErrorResponseException
      */
     public function deletePingback($uri)
     {
@@ -225,15 +248,34 @@ class Client extends GenericClient
         if ($responseText === self::STATUS_OK) {
             return true;
         }
-        throw new ErrorResponseException($this->getErrorMessage($responseText) ?: "Unknown error: `{$responseText}`.");
+        throw new ErrorResponseException(
+            $this->getErrorMessage($responseText) ?: $responseText,
+            $this->getErrorCode($responseText) ?: 0
+        );
     }
 
     /**
+     * Truncate pingback whitelist.
+     *
      * @return bool
-     * @throws RuntimeException
+     * @throws ErrorResponseException
      */
     public function deleteAllPingbacks()
     {
         return $this->deletePingback('all');
+    }
+
+    /**
+     * Match error code by response.
+     *
+     * @param string $responseText
+     * @return int
+     */
+    private function getErrorCode($responseText)
+    {
+        if (preg_match('/ERROR:\s*(\d{0,4})/ui', $responseText, $matches)) {
+            return intval($matches[1]);
+        }
+        return 0;
     }
 }
