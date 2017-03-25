@@ -2,6 +2,7 @@
 
 namespace Rucaptcha;
 
+use Rucaptcha\Exception\ErrorResponseException;
 use Rucaptcha\Exception\RuntimeException;
 
 /**
@@ -71,6 +72,8 @@ class Client extends GenericClient
     }
 
     /**
+     * Returns balance of account.
+     *
      * @return string
      */
     public function getBalance()
@@ -80,6 +83,8 @@ class Client extends GenericClient
     }
 
     /**
+     * Report of wrong recognition.
+     *
      * @param $captchaId
      * @return bool
      * @throws RuntimeException
@@ -90,15 +95,19 @@ class Client extends GenericClient
             ->getHttpClient()
             ->request('GET', "/res.php?key={$this->apiKey}&action=reportbad&id={$captchaId}");
 
-        if ($response->getBody()->__toString() === self::STATUS_OK_REPORT_RECORDED) {
+        $responseText = $response->getBody()->__toString();
+
+        if ($responseText === self::STATUS_OK_REPORT_RECORDED) {
             return true;
         }
-        throw new RuntimeException('Report sending trouble: ' . $response->getBody() . '.');
+        throw new ErrorResponseException($this->getErrorMessage($responseText) ?: "Unknown error: `{$responseText}`.");
     }
 
     /**
-     * @param string|array $paramsList
-     * @return array
+     * Returns server health data.
+     *
+     * @param string|string[] $paramsList   # List of metrics to be returned
+     * @return array                        # Array of load metrics $metric => $value formatted
      */
     public function getLoad($paramsList = ['waiting', 'load', 'minbid', 'averageRecognitionTime'])
     {
@@ -118,6 +127,8 @@ class Client extends GenericClient
     }
 
     /**
+     * Returns load data as XML.
+     *
      * @return \SimpleXMLElement
      */
     public function getLoadXml()
@@ -136,7 +147,9 @@ class Client extends GenericClient
      */
     public function getCaptchaResultWithCost($captchaId)
     {
-        $response = $this->getHttpClient()->request('GET', "/res.php?key={$this->apiKey}&action=get2&id={$captchaId}");
+        $response = $this
+            ->getHttpClient()
+            ->request('GET', "/res.php?key={$this->apiKey}&action=get2&id={$captchaId}");
 
         $responseText = $response->getBody()->__toString();
 
@@ -153,6 +166,74 @@ class Client extends GenericClient
             ];
         }
 
-        throw new RuntimeException($this->getErrorMessage($responseText) ?: "Unknown error: `{$responseText}`.");
+        throw new ErrorResponseException($this->getErrorMessage($responseText) ?: "Unknown error: `{$responseText}`.");
+    }
+
+    /**
+     * @param string $url
+     * @return bool                     # true if added and exception if fail
+     * @throws RuntimeException
+     */
+    public function addPingback($url)
+    {
+        $response = $this
+            ->getHttpClient()
+            ->request('GET', "/res.php?key={$this->apiKey}&action=add_pingback&addr={$url}");
+
+        $responseText = $response->getBody()->__toString();
+
+        if ($responseText === self::STATUS_OK) {
+            return true;
+        }
+        throw new ErrorResponseException($this->getErrorMessage($responseText) ?: "Unknown error: `{$responseText}`.");
+    }
+
+    /**
+     * @return string[]
+     * @throws RuntimeException
+     */
+    public function getPingbacks()
+    {
+        $response = $this
+            ->getHttpClient()
+            ->request('GET', "/res.php?key={$this->apiKey}&action=get_pingback");
+
+        $responseText = $response->getBody()->__toString();
+
+        if (strpos($responseText, 'OK|') !== false) {
+            $data = explode('|', $responseText);
+            unset($data[0]);
+            return empty($data[1]) ? [] : array_values($data);
+        }
+
+        throw new ErrorResponseException($this->getErrorMessage($responseText) ?: "Unknown error: `{$responseText}`.");
+    }
+
+    /**
+     * @param string $uri
+     * @return bool
+     * @throws RuntimeException
+     */
+    public function deletePingback($uri)
+    {
+        $response = $this
+            ->getHttpClient()
+            ->request('GET', "/res.php?key={$this->apiKey}&action=del_pingback&addr={$uri}");
+
+        $responseText = $response->getBody()->__toString();
+
+        if ($responseText === self::STATUS_OK) {
+            return true;
+        }
+        throw new ErrorResponseException($this->getErrorMessage($responseText) ?: "Unknown error: `{$responseText}`.");
+    }
+
+    /**
+     * @return bool
+     * @throws RuntimeException
+     */
+    public function deleteAllPingbacks()
+    {
+        return $this->deletePingback('all');
     }
 }

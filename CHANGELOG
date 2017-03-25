@@ -1,3 +1,10 @@
+1.0.6 - Add addPingback method
+      - Add getPingbacks method
+      - Add deletePingback method
+      - Add deleteAllPingbacks method
+      - Pingback examples
+      - ErrorResponseException
+
 1.0.5 - Add getLoad method example
       - Add getCaptchaResultWithCost method
       - Add codesniffer and fix codestyle

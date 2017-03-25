@@ -95,6 +95,13 @@ Client::sendCaptcha(string $content, array $extra = []) : int;
 Client::getCaptchaResult(int $captchaId) : string;
 Client::getCaptchaResultBulk(array $captchaIds) : array;
 
+/* Pingback stuff */
+
+Client::addPingback(string $uri) : bool;
+Client::getPingbacks() : array;
+Client::deletePingback(string $uri) : bool;
+Client::deleteAllPingbacks() : bool;
+
 /* Other */
 
 Client::getLastCaptchaId() : string;
@@ -133,3 +140,4 @@ Client::getLoadXml() : \SimpleXmlElement;
 `header_acao` | integer	| 0 | 0 = значение по умолчанию <br> 1 = in.php передаст Access-Control-Allow-Origin: * параметр в заголовке ответа. (Необходимо для кросс-доменных AJAX запросов в браузерных приложениях. Работает также для res.php.)
 `textinstructions` | string |  |Текст, который будет показан работнику. Может содержать в себе инструкции по разгадке капчи. Ограничение - 140 символов. Текст необходимо слать в кодировке UTF-8.
 `textcaptcha` | string | | Текстовая капча. Картинка при этом не загружается, работник получает только текст и вводит ответ на этот текст. Ограничение - 140 символов. Текст необходимо слать в кодировке UTF-8.
+`pingback` | string | | URL для автоматической отправки ответа на капчу (callback). URL должен быть зарегистрирован на сервере. [Больше информации здесь](https://rucaptcha.com/api-rucaptcha#pingback).

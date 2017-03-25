@@ -11,6 +11,7 @@ use GuzzleHttp\RequestOptions;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
+use Rucaptcha\Exception\ErrorResponseException;
 use Rucaptcha\Exception\InvalidArgumentException;
 use Rucaptcha\Exception\RucaptchaException;
 use Rucaptcha\Exception\RuntimeException;
@@ -175,7 +176,7 @@ class GenericClient implements LoggerAwareInterface
             return $this->lastCaptchaId;
         }
 
-        throw new RuntimeException($this->getErrorMessage($responseText) ?: "Unknown error: `{$responseText}`.");
+        throw new ErrorResponseException($this->getErrorMessage($responseText) ?: "Unknown error: `{$responseText}`.");
     }
 
     /**
@@ -198,7 +199,7 @@ class GenericClient implements LoggerAwareInterface
             return html_entity_decode(trim(explode('|', $responseText)[1]));
         }
 
-        throw new RuntimeException($this->getErrorMessage($responseText) ?: "Unknown error: `{$responseText}`.");
+        throw new ErrorResponseException($this->getErrorMessage($responseText) ?: "Unknown error: `{$responseText}`.");
     }
 
     /**
