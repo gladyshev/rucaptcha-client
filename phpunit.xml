@@ -4,14 +4,15 @@
          bootstrap="vendor/autoload.php"
          colors="true">
     <testsuites>
-        <testsuite name="Rucaptcha unit tests">
-            <directory>./tests</directory>
+        <testsuite name="unit">
+            <directory>./test</directory>
         </testsuite>
     </testsuites>
     <filter>
         <whitelist>
             <directory suffix=".php">./src</directory>
             <exclude>
+                <directory>./src/Exception</directory>
                 <file>./src/Client.php</file>
                 <file>./src/Extra.php</file>
                 <file>./src/Error.php</file>

@@ -3,7 +3,7 @@
  * @author Dmitry Gladyshev <deel@email.ru>
  */
 
-namespace Rucaptcha\tests;
+namespace Rucaptcha\Test;
 
 
 use GuzzleHttp\Client as GuzzleClient;
