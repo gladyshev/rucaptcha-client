@@ -1,7 +1,7 @@
 {
   "name": "gladyshev/rucaptcha-client",
   "keywords": ["captcha recognition", "rucaptcha"],
-  "description": "This is a modern full-featured RuCaptcha PHP-client with PSR-7 and PSR-3 support.",
+  "description": "Useful rucaptcha.com PHP-client with PSR-7 and PSR-3 support.",
   "type": "library",
   "license": "MIT",
   "authors": [
