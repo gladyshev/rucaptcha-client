@@ -2,7 +2,9 @@
 
 namespace Rucaptcha;
 
+use GuzzleHttp\RequestOptions;
 use Rucaptcha\Exception\ErrorResponseException;
+use Rucaptcha\Exception\RuntimeException;
 
 /**
  * Class Client
@@ -13,6 +15,11 @@ use Rucaptcha\Exception\ErrorResponseException;
 class Client extends GenericClient
 {
     const STATUS_OK_REPORT_RECORDED = 'OK_REPORT_RECORDED';
+
+    /**
+     * @var int
+     */
+    protected $recaptchaRTimeout = 15;
 
     /**
      * @var string
@@ -263,6 +270,67 @@ class Client extends GenericClient
     public function deleteAllPingbacks()
     {
         return $this->deletePingback('all');
+    }
+
+    /* Recaptcha v2 */
+
+    public function sendRecapthaV2($googleKey, $pageUrl, $extra = [])
+    {
+        $this->getLogger()->info("Try send google key (recaptcha)  on {$this->serverBaseUri}/in.php");
+
+        $response = $this->getHttpClient()->request('POST', "/in.php", [
+            RequestOptions::QUERY => array_merge($extra, [
+                'method' => 'userrecaptcha',
+                'key' => $this->apiKey,
+                'googlekey' => $googleKey,
+                'pageurl' => $pageUrl
+            ])
+        ]);
+
+        $responseText = $response->getBody()->__toString();
+
+        if (strpos($responseText, 'OK|') !== false) {
+            $this->lastCaptchaId = explode("|", $responseText)[1];
+            $this->getLogger()->info("Sending success. Got captcha id `{$this->lastCaptchaId}`.");
+            return $this->lastCaptchaId;
+        }
+
+        throw new ErrorResponseException($this->getErrorMessage($responseText) ?: "Unknown error: `{$responseText}`.");
+    }
+
+    /**
+     * @param string $googleKey
+     * @param string $pageUrl
+     * @param array $extra      # Captcha options
+     * @return string           # Code to place in hidden form
+     * @throws RuntimeException
+     */
+    public function recognizeRecaptchaV2($googleKey, $pageUrl, $extra = [])
+    {
+        $captchaId = $this->sendRecapthaV2($googleKey, $pageUrl, $extra);
+        $startTime = time();
+
+        while (true) {
+            $this->getLogger()->info("Waiting {$this->rTimeout} sec.");
+
+            sleep($this->recaptchaRTimeout);
+
+            if (time() - $startTime >= $this->mTimeout) {
+                throw new RuntimeException("Captcha waiting timeout.");
+            }
+
+            $result = $this->getCaptchaResult($captchaId);
+
+            if ($result === false) {
+                continue;
+            }
+
+            $this->getLogger()->info("Elapsed " . (time()-$startTime) . " second(s).");
+
+            return $result;
+        }
+
+        throw new RuntimeException('Unknown recognition logic error.');
     }
 
     /**

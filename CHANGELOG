@@ -1,3 +1,5 @@
+1.2.0 - Add RecapthcaV2 methods
+
 1.1.0 - Rename RucaptchaException to Exception
       - Resolve account limit codes on error response
       - Simplify error messages

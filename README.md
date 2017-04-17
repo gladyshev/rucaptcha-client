@@ -1,6 +1,6 @@
 rucaptcha-client
 ================
-PHP-обёртка для сервиса распознавания капчи [rucaptcha.com](https://rucaptcha.com?from=1342124).  
+Удобная PHP-обёртка для сервиса распознавания капчи [rucaptcha.com](https://rucaptcha.com?from=1342124).  
 Оригинальная документация доступна [по ссылке](https://rucaptcha.com/api-rucaptcha?from=1342124).
 
 [![Build Status](https://travis-ci.org/gladyshev/rucaptcha-client.svg?branch=master)](https://travis-ci.org/gladyshev/rucaptcha-client)
@@ -10,18 +10,19 @@ PHP-обёртка для сервиса распознавания капчи [
 ### Install 
 
 ```bash
-$ composer require --prefer-dist gladyshev/rucaptcha-client "~1.1"
+$ composer require --prefer-dist gladyshev/rucaptcha-client "*"
 ```
 or 
 ```php
 "require": {
   ...
-  "gladyshev/rucaptcha-client": "~1.1"
+  "gladyshev/rucaptcha-client": "*"
   ...
 }
 ```
 
 ### Examples
+Больше примеров в папке [examples](/examples).
 
 ```php
 /* Simple */
@@ -106,6 +107,11 @@ Client::getPingbacks() : array;
 Client::deletePingback(string $uri) : bool;
 Client::deleteAllPingbacks() : bool;
 
+/* Google Recaptcha V2 */
+
+Client::sendRecapthaV2($googleKey, $pageUrl, $extra = []) : int
+Client::recognizeRecapthaV2($googleKey, $pageUrl, $extra = []) : string
+
 /* Other */
 
 Client::getLastCaptchaId() : string;
@@ -144,3 +150,6 @@ Client::getLoadXml() : \SimpleXmlElement;
 `textinstructions` | string |  |Текст, который будет показан работнику. Может содержать в себе инструкции по разгадке капчи. Ограничение - 140 символов. Текст необходимо слать в кодировке UTF-8.
 `textcaptcha` | string | | Текстовая капча. Картинка при этом не загружается, работник получает только текст и вводит ответ на этот текст. Ограничение - 140 символов. Текст необходимо слать в кодировке UTF-8.
 `pingback` | string | | URL для автоматической отправки ответа на капчу (callback). URL должен быть зарегистрирован на сервере. [Больше информации здесь](https://rucaptcha.com/api-rucaptcha#pingback).
+`recaptcha` | string | | Используется при работе со старым алгоритмом распознования Google Recaptcha V2. [Больше информации здесь](https://rucaptcha.com/api-rucaptcha#solving_recaptchav2_old). 
+`proxy` | string | | Формат: логин:пароль@123.123.123.123:3128 [Больше информации о прокси здесь.](https://rucaptcha.com/api-rucaptcha#proxies)
+`proxytype` | string | | Тип вашего прокси-сервера: HTTP, HTTPS, SOCKS4, SOCKS5.
