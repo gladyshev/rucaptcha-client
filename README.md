@@ -121,7 +121,7 @@ Client::getLoad(array $paramsList = []) : array;
 Client::getLoadXml() : \SimpleXmlElement;
 ```
 
-### Library options
+### Client options
 
 Параметр | Тип | По умолчанию | Возможные значения
 ---| --- | --- | ---
