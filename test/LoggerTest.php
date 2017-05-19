@@ -18,22 +18,10 @@ class LoggerTest extends TestCase
     public function testPrintingLogInStdOutIfVerboseFlag($level, $message)
     {
         $logger = new Logger;
-        $logger->verbose = true;
 
         $logger->log($level, $message);
 
         $this->expectOutputRegex("#\[{$level}\]\s{$message}#ui");
-    }
-
-    /**
-     * @dataProvider providerLevelMessages
-     */
-    public function testDoNotPrintingInStdOutWithoutVerboseFlag($level, $message)
-    {
-        $logger = new Logger;
-        $logger->verbose = false;
-        $logger->log($level, $message);
-        $this->expectOutputString('');
     }
 
     public function providerLevelMessages()

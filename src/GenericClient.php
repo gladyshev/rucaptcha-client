@@ -11,6 +11,7 @@ use GuzzleHttp\RequestOptions;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 use Rucaptcha\Exception\ErrorResponseException;
 use Rucaptcha\Exception\InvalidArgumentException;
 use Rucaptcha\Exception\Exception;
@@ -86,6 +87,18 @@ class GenericClient implements LoggerAwareInterface
     public function setHttpClient(ClientInterface $client)
     {
         $this->httpClient = $client;
+
+        return $this;
+    }
+
+    /**
+     * @param bool $verbose
+     * @return $this
+     */
+    public function setVerbose($verbose)
+    {
+        $this->logger = null;
+        $this->verbose = $verbose;
 
         return $this;
     }
@@ -229,12 +242,12 @@ class GenericClient implements LoggerAwareInterface
     /**
      * @return LoggerInterface
      */
-    protected function getLogger()
+    public function getLogger()
     {
         if ($this->logger === null) {
-            $defaultLogger = new Logger;
-            $defaultLogger->verbose = & $this->verbose;
-
+            $defaultLogger = $this->verbose
+                ? new Logger
+                : new NullLogger;
             $this->setLogger($defaultLogger);
         }
         return $this->logger;
