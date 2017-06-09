@@ -5,7 +5,6 @@
 
 namespace Rucaptcha\Exception;
 
-
 class Exception extends \Exception
 {
 }
