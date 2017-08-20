@@ -19,12 +19,6 @@ class ConfigurableTraitTest extends TestCase
         $mock->setOptions(['incorrectName' => 100], false);
     }
 
-    public function testSetOptionDoNotThrowsExceptionWithIgnoreFlag()
-    {
-        $mock = $this->buildConfigurableClass();
-        $mock->setOptions(['incorrectName' => 100], true);
-    }
-
 
     public function testUseSetterIfExist()
     {
