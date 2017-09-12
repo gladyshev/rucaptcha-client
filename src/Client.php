@@ -4,6 +4,7 @@ namespace Rucaptcha;
 
 use GuzzleHttp\RequestOptions;
 use Rucaptcha\Exception\ErrorResponseException;
+use Rucaptcha\Exception\InvalidArgumentException;
 use Rucaptcha\Exception\RuntimeException;
 
 /**
@@ -14,6 +15,11 @@ use Rucaptcha\Exception\RuntimeException;
  */
 class Client extends GenericClient
 {
+    /* json status codes */
+    const STATUS_CODE_CAPCHA_NOT_READY = 0;
+    const STATUS_CODE_OK = 1;
+
+    /* status codes */
     const STATUS_OK_REPORT_RECORDED = 'OK_REPORT_RECORDED';
 
     /**
@@ -278,6 +284,10 @@ class Client extends GenericClient
     {
         $this->getLogger()->info("Try send google key (recaptcha)  on {$this->serverBaseUri}/in.php");
 
+        if ($this->softId && !isset($extra[Extra::SOFT_ID])) {
+            $extra[Extra::SOFT_ID] = $this->softId;
+        }
+
         $response = $this->getHttpClient()->request('POST', "/in.php", [
             RequestOptions::QUERY => array_merge($extra, [
                 'method' => 'userrecaptcha',
@@ -299,6 +309,8 @@ class Client extends GenericClient
     }
 
     /**
+     * Recaptcha V2 recognition.
+     *
      * @param string $googleKey
      * @param string $pageUrl
      * @param array $extra      # Captcha options
@@ -331,6 +343,143 @@ class Client extends GenericClient
         }
 
         throw new RuntimeException('Unknown recognition logic error.');
+    }
+
+    /**
+     * Keycaptcha recognition.
+     *
+     * @param string $SSCUserId
+     * @param string $SSCSessionId
+     * @param string $SSCWebServerSign
+     * @param string $SSCWebServerSign2
+     * @param string $pageUrl
+     * @param array $extra
+     * @return string                       # Captcha ID
+     * @throws ErrorResponseException
+     */
+    public function sendKeyCaptcha(
+        $SSCUserId,
+        $SSCSessionId,
+        $SSCWebServerSign,
+        $SSCWebServerSign2,
+        $pageUrl,
+        $extra = []
+    ) {
+    
+        $this->getLogger()->info("Try send google key (recaptcha)  on {$this->serverBaseUri}/in.php");
+
+        if ($this->softId && !isset($extra[Extra::SOFT_ID])) {
+            $extra[Extra::SOFT_ID] = $this->softId;
+        }
+
+        $response = $this->getHttpClient()->request('POST', "/in.php", [
+            RequestOptions::QUERY => array_merge($extra, [
+                'method' => 'keycaptcha',
+                'key' => $this->apiKey,
+                's_s_c_user_id' => $SSCUserId,
+                's_s_c_session_id' => $SSCSessionId,
+                's_s_c_web_server_sign' => $SSCWebServerSign,
+                's_s_c_web_server_sign2' => $SSCWebServerSign2,
+                'pageurl' => $pageUrl
+            ])
+        ]);
+
+        $responseText = $response->getBody()->__toString();
+
+        if (strpos($responseText, 'OK|') !== false) {
+            $this->lastCaptchaId = explode("|", $responseText)[1];
+            $this->getLogger()->info("Sending success. Got captcha id `{$this->lastCaptchaId}`.");
+            return $this->lastCaptchaId;
+        }
+
+        throw new ErrorResponseException($this->getErrorMessage($responseText) ?: "Unknown error: `{$responseText}`.");
+    }
+
+    /**
+     * Keycaptcha recognition.
+     *
+     * @param string $SSCUserId
+     * @param string $SSCSessionId
+     * @param string $SSCWebServerSign
+     * @param string $SSCWebServerSign2
+     * @param string $pageUrl
+     * @param array $extra
+     * @return string                       # Code to place into id="capcode" input value
+     * @throws RuntimeException
+     */
+    public function recognizeKeyCaptcha(
+        $SSCUserId,
+        $SSCSessionId,
+        $SSCWebServerSign,
+        $SSCWebServerSign2,
+        $pageUrl,
+        $extra = []
+    ) {
+        $captchaId = $this
+            ->sendKeyCaptcha($SSCUserId, $SSCSessionId, $SSCWebServerSign, $SSCWebServerSign2, $pageUrl, $extra);
+
+        $startTime = time();
+
+        while (true) {
+            $this->getLogger()->info("Waiting {$this->rTimeout} sec.");
+
+            sleep($this->recaptchaRTimeout);
+
+            if (time() - $startTime >= $this->mTimeout) {
+                throw new RuntimeException("Captcha waiting timeout.");
+            }
+
+            $result = $this->getCaptchaResult($captchaId);
+
+            if ($result === false) {
+                continue;
+            }
+
+            $this->getLogger()->info("Elapsed " . (time()-$startTime) . " second(s).");
+
+            return $result;
+        }
+
+        throw new RuntimeException('Unknown recognition logic error.');
+    }
+
+    /**
+     * Override generic method for using json response.
+     *
+     * @param string $captchaId         # Captcha task ID
+     * @return false|string             # Solved captcha text or false if captcha is not ready
+     * @throws ErrorResponseException
+     * @throws InvalidArgumentException
+     */
+    public function getCaptchaResult($captchaId)
+    {
+        $response = $this
+            ->getHttpClient()
+            ->request('GET', "/res.php?key={$this->apiKey}&action=get&id={$captchaId}&json=1");
+
+        $responseData = json_decode($response->getBody()->__toString(), true);
+
+        if (JSON_ERROR_NONE !== json_last_error()) {
+            throw new InvalidArgumentException(
+                'json_decode error: ' . json_last_error_msg()
+            );
+        }
+
+        if ($responseData['status'] === self::STATUS_CODE_CAPCHA_NOT_READY) {
+            return false;
+        }
+
+        if ($responseData['status'] === self::STATUS_CODE_OK) {
+            $this->getLogger()->info("Got OK response: `{$responseData['request']}`.");
+            return $responseData['request'];
+        }
+
+        throw new ErrorResponseException(
+            $this->getErrorMessage(
+                $responseData['request']
+            ) ?: $responseData['request'],
+            $responseData['status']
+        );
     }
 
     /**

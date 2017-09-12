@@ -9,6 +9,7 @@ $rucaptcha = new Rucaptcha\Client(getenv('__RUCAPTCHA_KEY__'), [
 $taskIds = [];
 
 $taskIds[] = $rucaptcha->sendCaptcha(file_get_contents(__DIR__.'/data/captcha.png'));
+//$taskIds[] = $rucaptcha->sendCaptcha(file_get_contents(__DIR__.'/data/unreadable.png'));
 $taskIds[] = $rucaptcha->sendCaptcha(file_get_contents(__DIR__.'/data/yandex.gif'), [
     Rucaptcha\Extra::IS_RUSSIAN => 1
 ]);
