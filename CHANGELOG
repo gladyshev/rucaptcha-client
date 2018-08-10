@@ -1,3 +1,6 @@
+1.3.1 - ReCaptcha V3 suport
+      - Codestyle fixes
+
 1.3.0 - Keycaptcha support
       - Refactoring getCaptchaResult for json response
 

@@ -65,6 +65,7 @@ class GenericClient implements LoggerAwareInterface
     /**
      * @param array $options
      * @param string $apiKey
+     * @throws InvalidArgumentException
      */
     public function __construct($apiKey, array $options = [])
     {
@@ -107,7 +108,9 @@ class GenericClient implements LoggerAwareInterface
      * @param string $path
      * @param array $extra
      * @return string
-     * @throws Exception
+     * @throws InvalidArgumentException
+     * @throws RuntimeException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function recognizeFile($path, array $extra = [])
     {
@@ -131,6 +134,7 @@ class GenericClient implements LoggerAwareInterface
      * @param array $extra
      * @return string
      * @throws RuntimeException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function recognize($content, array $extra = [])
     {
@@ -165,6 +169,7 @@ class GenericClient implements LoggerAwareInterface
      * @param array $extra          # Array of recognition options
      * @return string               # Captcha task ID
      * @throws RuntimeException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function sendCaptcha($content, array $extra = [])
     {
@@ -183,7 +188,7 @@ class GenericClient implements LoggerAwareInterface
 
         $responseText = $response->getBody()->__toString();
 
-        if (strpos($responseText, 'OK|') !== false) {
+        if (mb_strpos($responseText, 'OK|') !== false) {
             $this->lastCaptchaId = explode("|", $responseText)[1];
             $this->getLogger()->info("Sending success. Got captcha id `{$this->lastCaptchaId}`.");
             return $this->lastCaptchaId;
@@ -196,6 +201,7 @@ class GenericClient implements LoggerAwareInterface
      * @param string $captchaId     # Captcha task ID
      * @return string|false         # Solved captcha text or false if captcha is not ready
      * @throws RuntimeException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function getCaptchaResult($captchaId)
     {
@@ -207,7 +213,7 @@ class GenericClient implements LoggerAwareInterface
             return false;
         }
 
-        if (strpos($responseText, 'OK|') !== false) {
+        if (mb_strpos($responseText, 'OK|') !== false) {
             $this->getLogger()->info("Got OK response: `{$responseText}`.");
             return html_entity_decode(trim(explode('|', $responseText)[1]));
         }

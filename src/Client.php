@@ -55,9 +55,9 @@ class Client extends GenericClient
     /**
      * Bulk captcha result.
      *
-     * @param int[] $captchaIds         # Captcha task Ids array
+     * @param int[] $captchaIds # Captcha task Ids array
      * @return string[]                 # Array $captchaId => $captchaText or false if is not ready
-     * @throws ErrorResponseException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function getCaptchaResultBulk(array $captchaIds)
     {
@@ -88,6 +88,7 @@ class Client extends GenericClient
      * Returns balance of account.
      *
      * @return string
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function getBalance()
     {
@@ -104,6 +105,7 @@ class Client extends GenericClient
      * @param string $captchaId
      * @return bool
      * @throws ErrorResponseException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function badCaptcha($captchaId)
     {
@@ -127,7 +129,8 @@ class Client extends GenericClient
      * Returns server health data.
      *
      * @param string|string[] $paramsList   # List of metrics to be returned
-     * @return array                        # Array of load metrics $metric => $value formatted
+     * @return string[]|string              # Array of load metrics $metric => $value formatted
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function getLoad($paramsList = ['waiting', 'load', 'minbid', 'averageRecognitionTime'])
     {
@@ -150,6 +153,7 @@ class Client extends GenericClient
      * Returns load data as XML.
      *
      * @return \SimpleXMLElement
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function getLoadXml()
     {
@@ -164,6 +168,7 @@ class Client extends GenericClient
      * @param string $captchaId     # Captcha task ID
      * @return array | false        # Solved captcha and cost array or false if captcha is not ready
      * @throws ErrorResponseException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function getCaptchaResultWithCost($captchaId)
     {
@@ -198,6 +203,7 @@ class Client extends GenericClient
      * @param string $url
      * @return bool                     # true if added and exception if fail
      * @throws ErrorResponseException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function addPingback($url)
     {
@@ -222,6 +228,7 @@ class Client extends GenericClient
      *
      * @return string[]                 # List of urls
      * @throws ErrorResponseException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function getPingbacks()
     {
@@ -249,6 +256,7 @@ class Client extends GenericClient
      * @param string $uri
      * @return bool
      * @throws ErrorResponseException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function deletePingback($uri)
     {
@@ -272,6 +280,7 @@ class Client extends GenericClient
      *
      * @return bool
      * @throws ErrorResponseException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function deleteAllPingbacks()
     {
@@ -280,7 +289,17 @@ class Client extends GenericClient
 
     /* Recaptcha v2 */
 
-    public function sendRecapthaV2($googleKey, $pageUrl, $extra = [])
+    /**
+     * Sent recaptcha v2
+     *
+     * @param string $googleKey
+     * @param string $pageUrl
+     * @param array $extra
+     * @return string
+     * @throws ErrorResponseException
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
+    public function sendRecaptchaV2($googleKey, $pageUrl, $extra = [])
     {
         $this->getLogger()->info("Try send google key (recaptcha)  on {$this->serverBaseUri}/in.php");
 
@@ -309,17 +328,119 @@ class Client extends GenericClient
     }
 
     /**
+     * Alias for bc
+     * @param $googleKey
+     * @param $pageUrl
+     * @param array $extra
+     * @return string
+     * @throws ErrorResponseException
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @deprecated
+     */
+    public function sendRecapthaV2($googleKey, $pageUrl, $extra = [])
+    {
+        return $this->sendRecaptchaV2($googleKey, $pageUrl, $extra);
+    }
+
+    /**
      * Recaptcha V2 recognition.
      *
      * @param string $googleKey
      * @param string $pageUrl
-     * @param array $extra      # Captcha options
-     * @return string           # Code to place in hidden form
+     * @param array $extra              # Captcha options
+     * @return string                   # Code to place in hidden form
+     * @throws ErrorResponseException
+     * @throws InvalidArgumentException
      * @throws RuntimeException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function recognizeRecaptchaV2($googleKey, $pageUrl, $extra = [])
     {
-        $captchaId = $this->sendRecapthaV2($googleKey, $pageUrl, $extra);
+        $captchaId = $this->sendRecaptchaV2($googleKey, $pageUrl, $extra);
+        $startTime = time();
+
+        while (true) {
+            $this->getLogger()->info("Waiting {$this->rTimeout} sec.");
+
+            sleep($this->recaptchaRTimeout);
+
+            if (time() - $startTime >= $this->mTimeout) {
+                throw new RuntimeException("Captcha waiting timeout.");
+            }
+
+            $result = $this->getCaptchaResult($captchaId);
+
+            if ($result === false) {
+                continue;
+            }
+
+            $this->getLogger()->info("Elapsed " . (time()-$startTime) . " second(s).");
+
+            return $result;
+        }
+
+        throw new RuntimeException('Unknown recognition logic error.');
+    }
+
+    /* Recaptcha v3 */
+
+    /**
+     * @param string $googleKey
+     * @param string $pageUrl
+     * @param string $action
+     * @param string $minScore
+     * @param array $extra
+     * @return string
+     * @throws ErrorResponseException
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @see https://rucaptcha.com/blog/for_webmaster/recaptcha-v3-obhod
+     */
+    public function sendRecaptchaV3($googleKey, $pageUrl, $action, $minScore = '0.3', $extra = [])
+    {
+        $this->getLogger()->info("Try send google key (recaptcha v3)  on {$this->serverBaseUri}/in.php");
+
+        if ($this->softId && !isset($extra[Extra::SOFT_ID])) {
+            $extra[Extra::SOFT_ID] = $this->softId;
+        }
+
+        $response = $this->getHttpClient()->request('POST', "/in.php", [
+            RequestOptions::QUERY => array_merge($extra, [
+                'method' => 'userrecaptcha',
+                'version' => 'v3',
+                'key' => $this->apiKey,
+                'googlekey' => $googleKey,
+                'pageurl' => $pageUrl,
+                'action' => $action,
+                'min_score' => $minScore
+            ])
+        ]);
+
+        $responseText = $response->getBody()->__toString();
+
+        if (strpos($responseText, 'OK|') !== false) {
+            $this->lastCaptchaId = explode("|", $responseText)[1];
+            $this->getLogger()->info("Sending success. Got captcha id `{$this->lastCaptchaId}`.");
+            return $this->lastCaptchaId;
+        }
+
+        throw new ErrorResponseException($this->getErrorMessage($responseText) ?: "Unknown error: `{$responseText}`.");
+    }
+
+    /**
+     * @param string $googleKey
+     * @param string $pageUrl
+     * @param string $action
+     * @param string $minScore
+     * @param array $extra
+     * @return false|string
+     * @throws ErrorResponseException
+     * @throws InvalidArgumentException
+     * @throws RuntimeException
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
+    public function recognizeRecaptchaV3($googleKey, $pageUrl, $action, $minScore = '0.3', $extra = [])
+    {
+        $captchaId = $this->sendRecaptchaV3($googleKey, $pageUrl, $action, $minScore, $extra);
         $startTime = time();
 
         while (true) {
@@ -356,6 +477,7 @@ class Client extends GenericClient
      * @param array $extra
      * @return string                       # Captcha ID
      * @throws ErrorResponseException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function sendKeyCaptcha(
         $SSCUserId,
@@ -405,7 +527,10 @@ class Client extends GenericClient
      * @param string $pageUrl
      * @param array $extra
      * @return string                       # Code to place into id="capcode" input value
+     * @throws ErrorResponseException
+     * @throws InvalidArgumentException
      * @throws RuntimeException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function recognizeKeyCaptcha(
         $SSCUserId,
@@ -446,10 +571,11 @@ class Client extends GenericClient
     /**
      * Override generic method for using json response.
      *
-     * @param string $captchaId         # Captcha task ID
+     * @param string $captchaId # Captcha task ID
      * @return false|string             # Solved captcha text or false if captcha is not ready
      * @throws ErrorResponseException
      * @throws InvalidArgumentException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function getCaptchaResult($captchaId)
     {
