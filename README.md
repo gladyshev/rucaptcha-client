@@ -116,7 +116,7 @@ Client::recognizeRecapthaV2($googleKey, $pageUrl, $extra = []) : string
 
 Client::getLastCaptchaId() : string;
 Client::getBalance() : string;
-Client::reportGoog(string $captchaId) : bool;
+Client::reportGood(string $captchaId) : bool;
 Client::reportBad(string $captchaId) : bool;
 Client::getLoad(array $paramsList = []) : array;
 Client::getLoadXml() : \SimpleXmlElement;
