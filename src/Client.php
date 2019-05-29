@@ -2,10 +2,12 @@
 
 namespace Rucaptcha;
 
+use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\RequestOptions;
 use Rucaptcha\Exception\ErrorResponseException;
 use Rucaptcha\Exception\InvalidArgumentException;
 use Rucaptcha\Exception\RuntimeException;
+use SimpleXMLElement;
 
 /**
  * Class Client
@@ -57,7 +59,7 @@ class Client extends GenericClient
      *
      * @param int[] $captchaIds # Captcha task Ids array
      * @return string[]                 # Array $captchaId => $captchaText or false if is not ready
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws GuzzleException
      */
     public function getCaptchaResultBulk(array $captchaIds)
     {
@@ -88,7 +90,7 @@ class Client extends GenericClient
      * Returns balance of account.
      *
      * @return string
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws GuzzleException
      */
     public function getBalance()
     {
@@ -100,18 +102,71 @@ class Client extends GenericClient
     }
 
     /**
+     * Alias of $this->reportBad();
+     *
+     * @param string $captchaId
+     * @return bool
+     * @throws ErrorResponseException
+     * @throws GuzzleException
+     */
+    public function badCaptcha($captchaId)
+    {
+        return $this->reportBad($captchaId);
+    }
+
+    /**
+     * Alias of $this->reportGood();
+     *
+     * @param string $captchaId
+     * @return bool
+     * @throws ErrorResponseException
+     * @throws GuzzleException
+     */
+    public function goodCaptcha($captchaId)
+    {
+        return $this->reportGood($captchaId);
+    }
+
+    /**
      * Report of wrong recognition.
      *
      * @param string $captchaId
      * @return bool
      * @throws ErrorResponseException
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws GuzzleException
      */
-    public function badCaptcha($captchaId)
+    public function reportBad($captchaId)
     {
         $response = $this
             ->getHttpClient()
             ->request('GET', "/res.php?key={$this->apiKey}&action=reportbad&id={$captchaId}");
+
+        $responseText = $response->getBody()->__toString();
+
+        if ($responseText === self::STATUS_OK_REPORT_RECORDED) {
+            return true;
+        }
+
+        throw new ErrorResponseException(
+            $this->getErrorMessage($responseText) ?: $responseText,
+            $this->getErrorCode($responseText) ?: 0
+        );
+    }
+
+
+    /**
+     * Reports rucaptcha for good recognition.
+     *
+     * @param $captchaId
+     * @return bool
+     * @throws ErrorResponseException
+     * @throws GuzzleException
+     */
+    public function reportGood($captchaId)
+    {
+        $response = $this
+            ->getHttpClient()
+            ->request('GET', "/res.php?key={$this->apiKey}&action=reportgood&id={$captchaId}");
 
         $responseText = $response->getBody()->__toString();
 
@@ -130,7 +185,7 @@ class Client extends GenericClient
      *
      * @param string|string[] $paramsList   # List of metrics to be returned
      * @return string[]|string              # Array of load metrics $metric => $value formatted
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws GuzzleException
      */
     public function getLoad($paramsList = ['waiting', 'load', 'minbid', 'averageRecognitionTime'])
     {
@@ -152,8 +207,8 @@ class Client extends GenericClient
     /**
      * Returns load data as XML.
      *
-     * @return \SimpleXMLElement
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @return SimpleXMLElement
+     * @throws GuzzleException
      */
     public function getLoadXml()
     {
@@ -161,14 +216,14 @@ class Client extends GenericClient
             ->getHttpClient()
             ->request('GET', "/load.php");
 
-        return new \SimpleXMLElement($response->getBody()->__toString());
+        return new SimpleXMLElement($response->getBody()->__toString());
     }
 
     /**
      * @param string $captchaId     # Captcha task ID
      * @return array | false        # Solved captcha and cost array or false if captcha is not ready
      * @throws ErrorResponseException
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws GuzzleException
      */
     public function getCaptchaResultWithCost($captchaId)
     {
@@ -203,7 +258,7 @@ class Client extends GenericClient
      * @param string $url
      * @return bool                     # true if added and exception if fail
      * @throws ErrorResponseException
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws GuzzleException
      */
     public function addPingback($url)
     {
@@ -228,7 +283,7 @@ class Client extends GenericClient
      *
      * @return string[]                 # List of urls
      * @throws ErrorResponseException
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws GuzzleException
      */
     public function getPingbacks()
     {
@@ -256,7 +311,7 @@ class Client extends GenericClient
      * @param string $uri
      * @return bool
      * @throws ErrorResponseException
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws GuzzleException
      */
     public function deletePingback($uri)
     {
@@ -280,7 +335,7 @@ class Client extends GenericClient
      *
      * @return bool
      * @throws ErrorResponseException
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws GuzzleException
      */
     public function deleteAllPingbacks()
     {
@@ -297,7 +352,7 @@ class Client extends GenericClient
      * @param array $extra
      * @return string
      * @throws ErrorResponseException
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws GuzzleException
      */
     public function sendRecaptchaV2($googleKey, $pageUrl, $extra = [])
     {
@@ -334,7 +389,7 @@ class Client extends GenericClient
      * @param array $extra
      * @return string
      * @throws ErrorResponseException
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws GuzzleException
      * @deprecated
      */
     public function sendRecapthaV2($googleKey, $pageUrl, $extra = [])
@@ -352,7 +407,7 @@ class Client extends GenericClient
      * @throws ErrorResponseException
      * @throws InvalidArgumentException
      * @throws RuntimeException
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws GuzzleException
      */
     public function recognizeRecaptchaV2($googleKey, $pageUrl, $extra = [])
     {
@@ -392,7 +447,7 @@ class Client extends GenericClient
      * @param array $extra
      * @return string
      * @throws ErrorResponseException
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws GuzzleException
      * @see https://rucaptcha.com/blog/for_webmaster/recaptcha-v3-obhod
      */
     public function sendRecaptchaV3($googleKey, $pageUrl, $action, $minScore = '0.3', $extra = [])
@@ -436,7 +491,7 @@ class Client extends GenericClient
      * @throws ErrorResponseException
      * @throws InvalidArgumentException
      * @throws RuntimeException
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws GuzzleException
      */
     public function recognizeRecaptchaV3($googleKey, $pageUrl, $action, $minScore = '0.3', $extra = [])
     {
@@ -477,7 +532,7 @@ class Client extends GenericClient
      * @param array $extra
      * @return string                       # Captcha ID
      * @throws ErrorResponseException
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws GuzzleException
      */
     public function sendKeyCaptcha(
         $SSCUserId,
@@ -530,7 +585,7 @@ class Client extends GenericClient
      * @throws ErrorResponseException
      * @throws InvalidArgumentException
      * @throws RuntimeException
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws GuzzleException
      */
     public function recognizeKeyCaptcha(
         $SSCUserId,
@@ -575,7 +630,7 @@ class Client extends GenericClient
      * @return false|string             # Solved captcha text or false if captcha is not ready
      * @throws ErrorResponseException
      * @throws InvalidArgumentException
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws GuzzleException
      */
     public function getCaptchaResult($captchaId)
     {
