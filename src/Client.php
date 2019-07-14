@@ -415,7 +415,7 @@ class Client extends GenericClient
         $startTime = time();
 
         while (true) {
-            $this->getLogger()->info("Waiting {$this->rTimeout} sec.");
+            $this->getLogger()->info("Waiting {$this->recaptchaRTimeout} sec.");
 
             sleep($this->recaptchaRTimeout);
 
@@ -499,7 +499,7 @@ class Client extends GenericClient
         $startTime = time();
 
         while (true) {
-            $this->getLogger()->info("Waiting {$this->rTimeout} sec.");
+            $this->getLogger()->info("Waiting {$this->recaptchaRTimeout} sec.");
 
             sleep($this->recaptchaRTimeout);
 
@@ -601,7 +601,7 @@ class Client extends GenericClient
         $startTime = time();
 
         while (true) {
-            $this->getLogger()->info("Waiting {$this->rTimeout} sec.");
+            $this->getLogger()->info("Waiting {$this->recaptchaRTimeout} sec.");
 
             sleep($this->recaptchaRTimeout);
 
