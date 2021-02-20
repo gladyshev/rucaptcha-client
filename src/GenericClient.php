@@ -5,8 +5,7 @@
 
 namespace Rucaptcha;
 
-use GuzzleHttp\Client as GuzzleClient;
-use GuzzleHttp\ClientInterface;
+use Psr\Http\Client\ClientInterface;
 use GuzzleHttp\RequestOptions;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
@@ -14,7 +13,6 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Rucaptcha\Exception\ErrorResponseException;
 use Rucaptcha\Exception\InvalidArgumentException;
-use Rucaptcha\Exception\Exception;
 use Rucaptcha\Exception\RuntimeException;
 use SplFileObject;
 
@@ -160,8 +158,6 @@ class GenericClient implements LoggerAwareInterface
 
             return $result;
         }
-
-        throw new RuntimeException('Unknown recognition logic error.');
     }
 
     /**
@@ -238,7 +234,7 @@ class GenericClient implements LoggerAwareInterface
     protected function getHttpClient()
     {
         if ($this->httpClient === null) {
-            $this->httpClient = new GuzzleClient([
+            $this->httpClient = new \GuzzleHttp\Client([
                 'base_uri' => $this->serverBaseUri
             ]);
         }
