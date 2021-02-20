@@ -85,8 +85,8 @@ Client::__construct($apiKey, array $options = []): void;
 
 Client::setOptions(array $options): void;
 
-// Guzzle PSR-7 HTTP-client
-Client::setHttpClient(GuzzleHttp\ClientInterface $client): void;
+// Guzzle PSR-18 HTTP-client
+Client::setHttpClient(Psr\Http\Client\ClientInterface $client): void;
 
 // PSR-3 logger
 Client::setLogger(Psr\Log\LoggerInterface $logger): void;
@@ -118,8 +118,6 @@ Client::getLastCaptchaId(): string;
 Client::getBalance(): string;
 Client::reportGood(string $captchaId): bool;
 Client::reportBad(string $captchaId): bool;
-Client::getLoad(array $paramsList = []): array;
-Client::getLoadXml(): \SimpleXmlElement;
 ```
 
 ### Client options
