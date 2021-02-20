@@ -3,11 +3,11 @@
 namespace Rucaptcha;
 
 use GuzzleHttp\Exception\GuzzleException;
-use GuzzleHttp\RequestOptions;
+use GuzzleHttp\Psr7\Request;
 use Rucaptcha\Exception\ErrorResponseException;
 use Rucaptcha\Exception\InvalidArgumentException;
 use Rucaptcha\Exception\RuntimeException;
-use SimpleXMLElement;
+use Throwable;
 
 /**
  * Class Client
@@ -63,13 +63,17 @@ class Client extends GenericClient
      */
     public function getCaptchaResultBulk(array $captchaIds)
     {
-        $response = $this->getHttpClient()->request('GET', '/res.php?' . http_build_query([
-                'key' => $this->apiKey,
-                'action' => 'get',
-                'ids' => join(',', $captchaIds)
-            ]));
+        $request = new Request('GET', '/res.php?' . http_build_query([
+            'key' => $this->apiKey,
+            'action' => 'get',
+            'ids' => implode(',', $captchaIds)
+        ]));
 
-        $captchaTexts = $response->getBody()->__toString();
+        $response = $this
+            ->getHttpClient()
+            ->sendRequest($request);
+
+        $captchaTexts = $response->getBody()->getContents();
 
         $this->getLogger()->info("Got bulk response: `{$captchaTexts}`.");
 
@@ -79,8 +83,7 @@ class Client extends GenericClient
 
         foreach ($captchaTexts as $index => $captchaText) {
             $captchaText = html_entity_decode(trim($captchaText));
-            $result[$captchaIds[$index]] =
-                ($captchaText == self::STATUS_CAPTCHA_NOT_READY) ? false : $captchaText;
+            $result[$captchaIds[$index]] = ($captchaText == self::STATUS_CAPTCHA_NOT_READY) ? false : $captchaText;
         }
 
         return $result;
@@ -90,15 +93,17 @@ class Client extends GenericClient
      * Returns balance of account.
      *
      * @return string
-     * @throws GuzzleException
+     * @throws Throwable
      */
     public function getBalance()
     {
+        $request = new Request('GET', "/res.php?key={$this->apiKey}&action=getbalance");
+
         $response = $this
             ->getHttpClient()
-            ->request('GET', "/res.php?key={$this->apiKey}&action=getbalance");
+            ->sendRequest($request);
 
-        return $response->getBody()->__toString();
+        return $response->getBody()->getContents();
     }
 
     /**
@@ -106,8 +111,8 @@ class Client extends GenericClient
      *
      * @param string $captchaId
      * @return bool
-     * @throws ErrorResponseException
-     * @throws GuzzleException
+     * @throws Throwable
+     * @deprecated
      */
     public function badCaptcha($captchaId)
     {
@@ -120,7 +125,8 @@ class Client extends GenericClient
      * @param string $captchaId
      * @return bool
      * @throws ErrorResponseException
-     * @throws GuzzleException
+     * @throws Throwable
+     * @deprecated
      */
     public function goodCaptcha($captchaId)
     {
@@ -133,15 +139,17 @@ class Client extends GenericClient
      * @param string $captchaId
      * @return bool
      * @throws ErrorResponseException
-     * @throws GuzzleException
+     * @throws Throwable
      */
     public function reportBad($captchaId)
     {
+        $request = new Request('GET', "/res.php?key={$this->apiKey}&action=reportbad&id={$captchaId}");
+
         $response = $this
             ->getHttpClient()
-            ->request('GET', "/res.php?key={$this->apiKey}&action=reportbad&id={$captchaId}");
+            ->sendRequest($request);
 
-        $responseText = $response->getBody()->__toString();
+        $responseText = $response->getBody()->getContents();
 
         if ($responseText === self::STATUS_OK_REPORT_RECORDED) {
             return true;
@@ -160,15 +168,17 @@ class Client extends GenericClient
      * @param $captchaId
      * @return bool
      * @throws ErrorResponseException
-     * @throws GuzzleException
+     * @throws Throwable
      */
     public function reportGood($captchaId)
     {
+        $request = new Request('GET', "/res.php?key={$this->apiKey}&action=reportgood&id={$captchaId}");
+
         $response = $this
             ->getHttpClient()
-            ->request('GET', "/res.php?key={$this->apiKey}&action=reportgood&id={$captchaId}");
+            ->sendRequest($request);
 
-        $responseText = $response->getBody()->__toString();
+        $responseText = $response->getBody()->getContents();
 
         if ($responseText === self::STATUS_OK_REPORT_RECORDED) {
             return true;
@@ -181,57 +191,20 @@ class Client extends GenericClient
     }
 
     /**
-     * Returns server health data.
-     *
-     * @param string|string[] $paramsList   # List of metrics to be returned
-     * @return string[]|string              # Array of load metrics $metric => $value formatted
-     * @throws GuzzleException
-     */
-    public function getLoad($paramsList = ['waiting', 'load', 'minbid', 'averageRecognitionTime'])
-    {
-        $parser = $this->getLoadXml();
-
-        if (is_string($paramsList)) {
-            return $parser->$paramsList->__toString();
-        }
-
-        $statusData = [];
-
-        foreach ($paramsList as $item) {
-            $statusData[$item] = $parser->$item->__toString();
-        }
-
-        return $statusData;
-    }
-
-    /**
-     * Returns load data as XML.
-     *
-     * @return SimpleXMLElement
-     * @throws GuzzleException
-     */
-    public function getLoadXml()
-    {
-        $response = $this
-            ->getHttpClient()
-            ->request('GET', "/load.php");
-
-        return new SimpleXMLElement($response->getBody()->__toString());
-    }
-
-    /**
      * @param string $captchaId     # Captcha task ID
      * @return array | false        # Solved captcha and cost array or false if captcha is not ready
      * @throws ErrorResponseException
-     * @throws GuzzleException
+     * @throws Throwable
      */
     public function getCaptchaResultWithCost($captchaId)
     {
+        $request = new Request('GET', "/res.php?key={$this->apiKey}&action=get2&id={$captchaId}");
+
         $response = $this
             ->getHttpClient()
-            ->request('GET', "/res.php?key={$this->apiKey}&action=get2&id={$captchaId}");
+            ->sendRequest($request);
 
-        $responseText = $response->getBody()->__toString();
+        $responseText = $response->getBody()->getContents();
 
         if ($responseText === self::STATUS_CAPTCHA_NOT_READY) {
             return false;
@@ -258,15 +231,17 @@ class Client extends GenericClient
      * @param string $url
      * @return bool                     # true if added and exception if fail
      * @throws ErrorResponseException
-     * @throws GuzzleException
+     * @throws Throwable
      */
     public function addPingback($url)
     {
+        $request = new Request('GET', "/res.php?key={$this->apiKey}&action=add_pingback&addr={$url}");
+
         $response = $this
             ->getHttpClient()
-            ->request('GET', "/res.php?key={$this->apiKey}&action=add_pingback&addr={$url}");
+            ->sendRequest($request);
 
-        $responseText = $response->getBody()->__toString();
+        $responseText = $response->getBody()->getContents();
 
         if ($responseText === self::STATUS_OK) {
             return true;
@@ -283,15 +258,17 @@ class Client extends GenericClient
      *
      * @return string[]                 # List of urls
      * @throws ErrorResponseException
-     * @throws GuzzleException
+     * @throws Throwable
      */
     public function getPingbacks()
     {
+        $request = new Request('GET', "/res.php?key={$this->apiKey}&action=get_pingback");
+
         $response = $this
             ->getHttpClient()
-            ->request('GET', "/res.php?key={$this->apiKey}&action=get_pingback");
+            ->sendRequest($request);
 
-        $responseText = $response->getBody()->__toString();
+        $responseText = $response->getBody()->getContents();
 
         if (strpos($responseText, 'OK|') !== false) {
             $data = explode('|', $responseText);
@@ -311,19 +288,22 @@ class Client extends GenericClient
      * @param string $uri
      * @return bool
      * @throws ErrorResponseException
-     * @throws GuzzleException
+     * @throws Throwable
      */
     public function deletePingback($uri)
     {
+        $request = new Request('GET', "/res.php?key={$this->apiKey}&action=del_pingback&addr={$uri}");
+
         $response = $this
             ->getHttpClient()
-            ->request('GET', "/res.php?key={$this->apiKey}&action=del_pingback&addr={$uri}");
+            ->sendRequest($request);
 
-        $responseText = $response->getBody()->__toString();
+        $responseText = $response->getBody()->getContents();
 
         if ($responseText === self::STATUS_OK) {
             return true;
         }
+
         throw new ErrorResponseException(
             $this->getErrorMessage($responseText) ?: $responseText,
             $this->getErrorCode($responseText) ?: 0
@@ -335,7 +315,7 @@ class Client extends GenericClient
      *
      * @return bool
      * @throws ErrorResponseException
-     * @throws GuzzleException
+     * @throws Throwable
      */
     public function deleteAllPingbacks()
     {
@@ -350,9 +330,11 @@ class Client extends GenericClient
      * @param string $googleKey
      * @param string $pageUrl
      * @param array $extra
+     *
      * @return string
+     *
      * @throws ErrorResponseException
-     * @throws GuzzleException
+     * @throws Throwable
      */
     public function sendRecaptchaV2($googleKey, $pageUrl, $extra = [])
     {
@@ -362,16 +344,20 @@ class Client extends GenericClient
             $extra[Extra::SOFT_ID] = $this->softId;
         }
 
-        $response = $this->getHttpClient()->request('POST', "/in.php", [
-            RequestOptions::QUERY => array_merge($extra, [
-                'method' => 'userrecaptcha',
-                'key' => $this->apiKey,
-                'googlekey' => $googleKey,
-                'pageurl' => $pageUrl
-            ])
+        $params = array_merge($extra, [
+            'method' => 'userrecaptcha',
+            'key' => $this->apiKey,
+            'googlekey' => $googleKey,
+            'pageurl' => $pageUrl
         ]);
 
-        $responseText = $response->getBody()->__toString();
+        $request = new Request('POST', "/in.php?" . http_build_query($params));
+
+        $response = $this
+            ->getHttpClient()
+            ->sendRequest($request);
+
+        $responseText = $response->getBody()->getContents();
 
         if (strpos($responseText, 'OK|') !== false) {
             $this->lastCaptchaId = explode("|", $responseText)[1];
@@ -383,31 +369,18 @@ class Client extends GenericClient
     }
 
     /**
-     * Alias for bc
-     * @param $googleKey
-     * @param $pageUrl
-     * @param array $extra
-     * @return string
-     * @throws ErrorResponseException
-     * @throws GuzzleException
-     * @deprecated
-     */
-    public function sendRecapthaV2($googleKey, $pageUrl, $extra = [])
-    {
-        return $this->sendRecaptchaV2($googleKey, $pageUrl, $extra);
-    }
-
-    /**
      * Recaptcha V2 recognition.
      *
      * @param string $googleKey
      * @param string $pageUrl
      * @param array $extra              # Captcha options
+     *
      * @return string                   # Code to place in hidden form
+     *
      * @throws ErrorResponseException
      * @throws InvalidArgumentException
      * @throws RuntimeException
-     * @throws GuzzleException
+     * @throws Throwable
      */
     public function recognizeRecaptchaV2($googleKey, $pageUrl, $extra = [])
     {
@@ -433,8 +406,6 @@ class Client extends GenericClient
 
             return $result;
         }
-
-        throw new RuntimeException('Unknown recognition logic error.');
     }
 
     /* Recaptcha v3 */
@@ -445,9 +416,12 @@ class Client extends GenericClient
      * @param string $action
      * @param string $minScore
      * @param array $extra
+     *
      * @return string
+     *
      * @throws ErrorResponseException
-     * @throws GuzzleException
+     * @throws Throwable
+     *
      * @see https://rucaptcha.com/blog/for_webmaster/recaptcha-v3-obhod
      */
     public function sendRecaptchaV3($googleKey, $pageUrl, $action, $minScore = '0.3', $extra = [])
@@ -458,19 +432,21 @@ class Client extends GenericClient
             $extra[Extra::SOFT_ID] = $this->softId;
         }
 
-        $response = $this->getHttpClient()->request('POST', "/in.php", [
-            RequestOptions::QUERY => array_merge($extra, [
-                'method' => 'userrecaptcha',
-                'version' => 'v3',
-                'key' => $this->apiKey,
-                'googlekey' => $googleKey,
-                'pageurl' => $pageUrl,
-                'action' => $action,
-                'min_score' => $minScore
-            ])
-        ]);
+        $request = new Request('POST', "/in.php?". http_build_query(array_merge($extra, [
+            'method' => 'userrecaptcha',
+            'version' => 'v3',
+            'key' => $this->apiKey,
+            'googlekey' => $googleKey,
+            'pageurl' => $pageUrl,
+            'action' => $action,
+            'min_score' => $minScore
+        ])));
 
-        $responseText = $response->getBody()->__toString();
+        $response = $this
+            ->getHttpClient()
+            ->sendRequest($request);
+
+        $responseText = $response->getBody()->getContents();
 
         if (strpos($responseText, 'OK|') !== false) {
             $this->lastCaptchaId = explode("|", $responseText)[1];
@@ -487,11 +463,13 @@ class Client extends GenericClient
      * @param string $action
      * @param string $minScore
      * @param array $extra
+     *
      * @return false|string
+     *
      * @throws ErrorResponseException
      * @throws InvalidArgumentException
      * @throws RuntimeException
-     * @throws GuzzleException
+     * @throws Throwable
      */
     public function recognizeRecaptchaV3($googleKey, $pageUrl, $action, $minScore = '0.3', $extra = [])
     {
@@ -517,8 +495,6 @@ class Client extends GenericClient
 
             return $result;
         }
-
-        throw new RuntimeException('Unknown recognition logic error.');
     }
 
     /**
@@ -530,9 +506,11 @@ class Client extends GenericClient
      * @param string $SSCWebServerSign2
      * @param string $pageUrl
      * @param array $extra
-     * @return string                       # Captcha ID
+     *
+     * @return string # Captcha ID
+     *
      * @throws ErrorResponseException
-     * @throws GuzzleException
+     * @throws Throwable
      */
     public function sendKeyCaptcha(
         $SSCUserId,
@@ -542,26 +520,27 @@ class Client extends GenericClient
         $pageUrl,
         $extra = []
     ) {
-    
         $this->getLogger()->info("Try send google key (recaptcha)  on {$this->serverBaseUri}/in.php");
 
         if ($this->softId && !isset($extra[Extra::SOFT_ID])) {
             $extra[Extra::SOFT_ID] = $this->softId;
         }
 
-        $response = $this->getHttpClient()->request('POST', "/in.php", [
-            RequestOptions::QUERY => array_merge($extra, [
-                'method' => 'keycaptcha',
-                'key' => $this->apiKey,
-                's_s_c_user_id' => $SSCUserId,
-                's_s_c_session_id' => $SSCSessionId,
-                's_s_c_web_server_sign' => $SSCWebServerSign,
-                's_s_c_web_server_sign2' => $SSCWebServerSign2,
-                'pageurl' => $pageUrl
-            ])
-        ]);
+        $request = new Request('POST', "/in.php?" . http_build_query(array_merge($extra, [
+            'method' => 'keycaptcha',
+            'key' => $this->apiKey,
+            's_s_c_user_id' => $SSCUserId,
+            's_s_c_session_id' => $SSCSessionId,
+            's_s_c_web_server_sign' => $SSCWebServerSign,
+            's_s_c_web_server_sign2' => $SSCWebServerSign2,
+            'pageurl' => $pageUrl
+        ])));
 
-        $responseText = $response->getBody()->__toString();
+        $response = $this
+            ->getHttpClient()
+            ->sendRequest($request);
+
+        $responseText = $response->getBody()->getContents();
 
         if (strpos($responseText, 'OK|') !== false) {
             $this->lastCaptchaId = explode("|", $responseText)[1];
@@ -585,7 +564,7 @@ class Client extends GenericClient
      * @throws ErrorResponseException
      * @throws InvalidArgumentException
      * @throws RuntimeException
-     * @throws GuzzleException
+     * @throws Throwable
      */
     public function recognizeKeyCaptcha(
         $SSCUserId,
@@ -619,8 +598,6 @@ class Client extends GenericClient
 
             return $result;
         }
-
-        throw new RuntimeException('Unknown recognition logic error.');
     }
 
     /**
@@ -630,15 +607,17 @@ class Client extends GenericClient
      * @return false|string             # Solved captcha text or false if captcha is not ready
      * @throws ErrorResponseException
      * @throws InvalidArgumentException
-     * @throws GuzzleException
+     * @throws Throwable
      */
     public function getCaptchaResult($captchaId)
     {
+        $request = new Request('GET', "/res.php?key={$this->apiKey}&action=get&id={$captchaId}&json=1");
+
         $response = $this
             ->getHttpClient()
-            ->request('GET', "/res.php?key={$this->apiKey}&action=get&id={$captchaId}&json=1");
+            ->sendRequest($request);
 
-        $responseData = json_decode($response->getBody()->__toString(), true);
+        $responseData = json_decode($response->getBody()->getContents(), true);
 
         if (JSON_ERROR_NONE !== json_last_error()) {
             throw new InvalidArgumentException(
@@ -656,9 +635,7 @@ class Client extends GenericClient
         }
 
         throw new ErrorResponseException(
-            $this->getErrorMessage(
-                $responseData['request']
-            ) ?: $responseData['request'],
+            $this->getErrorMessage($responseData['request']) ?: $responseData['request'],
             $responseData['status']
         );
     }

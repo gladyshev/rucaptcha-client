@@ -1,21 +1,19 @@
 {
   "name": "gladyshev/rucaptcha-client",
-  "keywords": ["captcha recognition", "rucaptcha"],
-  "description": "Useful rucaptcha.com PHP-client with PSR-7 and PSR-3 support.",
+  "keywords": ["captcha recognition", "rucaptcha", "2captcha.com", "rucaptcha.com"],
+  "description": "Lightweight and useful 2captcha.com/rucaptcha.com PHP-client with PSRs support.",
   "type": "library",
   "license": "MIT",
   "authors": [
     {
       "name": "Dmitry Gladyshev",
-      "email": "deel@email.ru",
-      "homepage": "https://github.com/gladyshev"
+      "email": "deel@email.ru"
     }
   ],
   "require": {
-    "php": ">=5.6",
+    "php": ">=7.2.5",
     "ext-json": "*",
     "ext-mbstring": "*",
-    "ext-SimpleXML": "*",
     "psr/http-client": "~1.0.0",
     "psr/log": "~1.0.0",
     "guzzlehttp/guzzle": "~7.2"

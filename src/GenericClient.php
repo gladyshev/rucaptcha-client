@@ -5,6 +5,7 @@
 
 namespace Rucaptcha;
 
+use GuzzleHttp\Psr7\Request;
 use Psr\Http\Client\ClientInterface;
 use GuzzleHttp\RequestOptions;
 use Psr\Log\LoggerAwareInterface;
@@ -15,6 +16,7 @@ use Rucaptcha\Exception\ErrorResponseException;
 use Rucaptcha\Exception\InvalidArgumentException;
 use Rucaptcha\Exception\RuntimeException;
 use SplFileObject;
+use Throwable;
 
 class GenericClient implements LoggerAwareInterface
 {
@@ -164,25 +166,27 @@ class GenericClient implements LoggerAwareInterface
      * @param string $content       # Captcha image content
      * @param array $extra          # Array of recognition options
      * @return string               # Captcha task ID
-     * @throws RuntimeException
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws Throwable
      */
     public function sendCaptcha($content, array $extra = [])
     {
         $this->getLogger()->info("Try send captcha image on {$this->serverBaseUri}/in.php");
 
-        $response = $this->getHttpClient()->request('POST', '/in.php', [
-            RequestOptions::HEADERS => [
-                'Content-Type' => 'application/x-www-form-urlencoded'
-            ],
-            RequestOptions::FORM_PARAMS => array_merge($extra, [
-                'method' => 'base64',
-                'key' => $this->apiKey,
-                'body' => base64_encode($content)
-            ])
-        ]);
+        $headers = [
+            'Content-Type' => 'application/x-www-form-urlencoded'
+        ];
 
-        $responseText = $response->getBody()->__toString();
+        $body = http_build_query(array_merge($extra, [
+            'method' => 'base64',
+            'key' => $this->apiKey,
+            'body' => base64_encode($content)
+        ]));
+
+        $request = new Request('POST', '/in.php', $headers, $body);
+
+        $response = $this->getHttpClient()->sendRequest($request);
+
+        $responseText = $response->getBody()->getContents();
 
         if (mb_strpos($responseText, 'OK|') !== false) {
             $this->lastCaptchaId = explode("|", $responseText)[1];
@@ -196,14 +200,17 @@ class GenericClient implements LoggerAwareInterface
     /**
      * @param string $captchaId     # Captcha task ID
      * @return string|false         # Solved captcha text or false if captcha is not ready
-     * @throws RuntimeException
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws Throwable
      */
     public function getCaptchaResult($captchaId)
     {
-        $response = $this->getHttpClient()->request('GET', "/res.php?key={$this->apiKey}&action=get&id={$captchaId}");
+        $request = new \GuzzleHttp\Psr7\Request('GET', "/res.php?key={$this->apiKey}&action=get&id={$captchaId}");
 
-        $responseText = $response->getBody()->__toString();
+        $response = $this
+            ->getHttpClient()
+            ->sendRequest($request);
+
+        $responseText = $response->getBody()->getContents();
 
         if ($responseText === self::STATUS_CAPTCHA_NOT_READY) {
             return false;
