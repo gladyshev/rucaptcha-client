@@ -3,7 +3,9 @@
 require '../vendor/autoload.php';
 
 $rucaptcha = new Rucaptcha\Client(getenv('__RUCAPTCHA_KEY__'), [
-    'verbose' => 1
+    'verbose' => true,
+    'httpClient' => new GuzzleHttp\Client(['base_uri' => 'https://2captcha.com']),
+    'logger'     => new Monolog\Logger('2Captcha', [new Monolog\Handler\StreamHandler('php://stdout')])
 ]);
 
 $taskIds = [];

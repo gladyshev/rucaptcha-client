@@ -36,7 +36,9 @@ print_r($captchaText); // h54g6
 /* Advanced example */
 
 $rucaptcha = new Rucaptcha\Client('YOUR_API_KEY', [
-    'verbose' => true
+    'verbose'    => true,
+    'httpClient' => new \GuzzleHttp\Client(['base_uri' => 'https://2captcha.com']),
+    'logger'     => new \Monolog\Logger('2Captcha', [new StreamHandler('php://stdout')])
 ]);
 
 $taskIds = [];
@@ -90,7 +92,6 @@ Client::setHttpClient(Psr\Http\Client\ClientInterface $client): void;
 
 // PSR-3 logger
 Client::setLogger(Psr\Log\LoggerInterface $logger): void;
-
 
 /* Solving captcha methods */
 
