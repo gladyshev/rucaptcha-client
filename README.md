@@ -4,8 +4,8 @@ rucaptcha-client
 Оригинальная документация доступна [по ссылке](https://rucaptcha.com/api-rucaptcha?from=1342124).
 
 [![Build Status](https://travis-ci.org/gladyshev/rucaptcha-client.svg?branch=v2)](https://travis-ci.org/gladyshev/rucaptcha-client)
-[![Code Coverage](https://scrutinizer-ci.com/g/gladyshev/rucaptcha-client/badges/coverage.png?b=v2)](https://scrutinizer-ci.com/g/gladyshev/rucaptcha-client/?branch=master)
-[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/gladyshev/rucaptcha-client/badges/quality-score.png?b=v2)](https://scrutinizer-ci.com/g/gladyshev/rucaptcha-client/?branch=master)
+[![Code Coverage](https://scrutinizer-ci.com/g/gladyshev/rucaptcha-client/badges/coverage.png?b=v2)](https://scrutinizer-ci.com/g/gladyshev/rucaptcha-client/?branch=v2)
+[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/gladyshev/rucaptcha-client/badges/quality-score.png?b=v2)](https://scrutinizer-ci.com/g/gladyshev/rucaptcha-client/?branch=v2)
 
 ### Install 
 
