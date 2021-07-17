@@ -16,7 +16,7 @@ or
 ```php
 "require": {
   ...
-  "gladyshev/rucaptcha-client": "^2.0.0"
+  "gladyshev/rucaptcha-client": "*"
   ...
 }
 ```
@@ -27,7 +27,10 @@ or
 ```php
 /* Simple */
 
-$rucaptcha = new Rucaptcha\Client('YOUR_API_KEY');
+$rucaptcha = new Rucaptcha\Client(
+    Rucaptcha\Config::fromApiKey(getenv('__RUCAPTCHA_KEY__')),
+    new GuzzleHttp\Client() // Any PSR-18 HTTP-client
+);
 
 $captchaText = $rucaptcha->recognizeFile('captcha.png');
 print_r($captchaText); // h54g6
