@@ -5,7 +5,7 @@
 
 namespace Rucaptcha;
 
-class Extra
+final class Extra
 {
     const PHRASE = 'phrase';
     const REGSENSE = 'regsense';

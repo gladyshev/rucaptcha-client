@@ -5,7 +5,7 @@
 
 namespace Rucaptcha;
 
-class Error
+final class Error
 {
     const KEY_DOES_NOT_EXIST            = 'ERROR_KEY_DOES_NOT_EXIST';
     const WRONG_ID_FORMAT               = 'ERROR_WRONG_ID_FORMAT';

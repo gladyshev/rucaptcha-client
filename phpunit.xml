@@ -13,7 +13,6 @@
             <directory suffix=".php">./src</directory>
             <exclude>
                 <directory>./src/Exception</directory>
-                <file>./src/Client.php</file>
                 <file>./src/Extra.php</file>
                 <file>./src/Error.php</file>
             </exclude>

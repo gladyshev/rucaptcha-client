@@ -2,9 +2,10 @@
 
 require '../vendor/autoload.php';
 
-$rucaptcha = new Rucaptcha\Client(getenv('__RUCAPTCHA_KEY__'), [
-    'verbose' => 1
-]);
+$rucaptcha = new Rucaptcha\Client(
+    Rucaptcha\Config::fromApiKey(getenv('__RUCAPTCHA_KEY__')),
+    new GuzzleHttp\Client()
+);
 
 $taskIds = [];
 

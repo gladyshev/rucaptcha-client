@@ -2,11 +2,11 @@
 
 require '../vendor/autoload.php';
 
-$rucaptcha = new Rucaptcha\Client(getenv('__RUCAPTCHA_KEY__'), [
-    'verbose' => true,
-    'httpClient' => new GuzzleHttp\Client(['base_uri' => 'https://2captcha.com']),
-    'logger'     => new Monolog\Logger('2Captcha', [new Monolog\Handler\StreamHandler('php://stdout')])
-]);
+$rucaptcha = new Rucaptcha\Client(
+    Rucaptcha\Config::fromApiKey(getenv('__RUCAPTCHA_KEY__')),
+    new GuzzleHttp\Client(),
+    new \Monolog\Logger('Rucaptcha', [new \Monolog\Handler\StreamHandler('php://stdout')])
+);
 
 $taskIds = [];
 

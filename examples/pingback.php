@@ -2,7 +2,10 @@
 
 require '../vendor/autoload.php';
 
-$client = new Rucaptcha\Client(getenv('__RUCAPTCHA_KEY__'));
+$client = new Rucaptcha\Client(
+    Rucaptcha\Config::fromApiKey(getenv('__RUCAPTCHA_KEY__')),
+    new GuzzleHttp\Client()
+);
 
 $pingbackUrl = 'http://' . getenv('__HOST__') .'/captcha/pingback.php';
 

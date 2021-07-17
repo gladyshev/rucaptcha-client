@@ -1,8 +1,14 @@
+2.0.0 - Remove Guzzle dependency
+      - Remove Logger
+      - Strict types (using typehints)
+      - break bc
+      - update license (unlicense)
+
 1.3.3 - Report Good method
       - Report Bad method
       - php 7.2 and 7.3 testing enabled
 
-1.3.2 - ReCaptcha V3 suport
+1.3.2 - ReCaptcha V3 support
       - Codestyle fixes
 
 1.3.0 - Keycaptcha support

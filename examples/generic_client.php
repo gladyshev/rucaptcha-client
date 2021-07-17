@@ -2,18 +2,17 @@
 
 require '../vendor/autoload.php';
 
-use Rucaptcha\GenericClient;
+$anticaptchaConfig = new Rucaptcha\Config(
+    getenv('__ANTICAPTCHA_KEY__'),
+    'http://anti-captcha.com'
+);
 
-/*
- * Changes the server base URL is enough to start using anti-captcha.com API
- *
- * But you may to use my specific library https://github.com/gladyshev/anticaptcha-client
- */
-class Anticaptcha extends GenericClient
-{
-    protected $serverBaseUri = 'http://anti-captcha.com';
-}
+$client = new Rucaptcha\GenericClient(
+    $anticaptchaConfig,
+    new GuzzleHttp\Client()
+);
 
-$captchaText = (new Anticaptcha(getenv('__ANTICAPTCHA_KEY__')))->recognizeFile(__DIR__ . '/data/captcha.png');
+// Recognize using Anticaptcha service
+$captchaText = $client->recognizeFile(__DIR__ . '/data/captcha.png');
 
 var_dump($captchaText);

@@ -5,36 +5,24 @@
 
 namespace Rucaptcha\Test;
 
-
 use GuzzleHttp\Client as GuzzleClient;
-use Psr\Http\Client\ClientInterface;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
+use Rucaptcha\Config;
 use Rucaptcha\Error;
 use Rucaptcha\GenericClient;
 
 class GenericClientTest extends TestCase
 {
-    public function testGetHttpClientMustReturnClientInterfaceInstance()
-    {
-        $client = new GenericClient('');
-        $httpClient = $this->invokeMethod($client, 'getHttpClient');
-        $this->assertInstanceOf(ClientInterface::class, $httpClient);
-    }
-
-    public function testGetLoggerMustReturnLoggerInterfaceInstance()
-    {
-        $client = new GenericClient('');
-        $logger = $this->invokeMethod($client, 'getLogger');
-        $this->assertInstanceOf(LoggerInterface::class, $logger);
-    }
 
     public function testEmptyCaptchaIdBeforeFirstSendCaptchaTask()
     {
-        $client = new GenericClient('');
+        $client = new GenericClient(
+            new Config(''),
+            new GuzzleClient()
+        );
         $this->assertEquals('', $client->getLastCaptchaId());
     }
 
@@ -61,7 +49,7 @@ class GenericClientTest extends TestCase
         $serverResponse = $client->getCaptchaResult('');
 
         if($response==='CAPCHA_NOT_READY') {
-            $this->assertFalse($serverResponse);
+            $this->assertNull($serverResponse);
         } else {
             $this->assertEquals('1234567890', $serverResponse);
         }
@@ -70,10 +58,10 @@ class GenericClientTest extends TestCase
     /**
      * @param $errorResponse
      * @dataProvider providerErrorInResponse
-     * @expectedException \Rucaptcha\Exception\RuntimeException
      */
     public function testSendCaptchaMustThrowRucaptchaExceptionOnErrorResponse($errorResponse)
     {
+        $this->expectException(\Rucaptcha\Exception\RuntimeException::class);
         $client = self::buildClientWithMockedGuzzle($errorResponse);
         $client->sendCaptcha('');
     }
@@ -81,11 +69,11 @@ class GenericClientTest extends TestCase
     /**
      * @param $errorResponse
      * @dataProvider providerErrorResResponse
-     * @expectedException \Rucaptcha\Exception\RuntimeException
      */
     public function testGetCaptchaResultMustThrowRucaptchaExceptionOnErrorResponse($errorResponse)
     {
         $client = self::buildClientWithMockedGuzzle($errorResponse);
+        $this->expectException(\Rucaptcha\Exception\RuntimeException::class);
         $client->getCaptchaResult('');
     }
 
@@ -148,10 +136,10 @@ class GenericClientTest extends TestCase
         $handler = HandlerStack::create($mock);
         $httpClient = new GuzzleClient(['handler' => $handler]);
 
-        $genericClient = new GenericClient('');
-        $genericClient->setHttpClient($httpClient);
-
-        return $genericClient;
+        return new GenericClient(
+            new Config(''),
+            $httpClient
+        );
     }
 
     /**

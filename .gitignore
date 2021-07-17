@@ -3,3 +3,7 @@
 
 # Composer files
 /vendor/
+composer.lock
+
+# PHPUnit cache
+.phpunit.result.cache

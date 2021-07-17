@@ -2,7 +2,6 @@
 
 namespace Rucaptcha;
 
-use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Psr7\Request;
 use Rucaptcha\Exception\ErrorResponseException;
 use Rucaptcha\Exception\InvalidArgumentException;
@@ -15,7 +14,7 @@ use Throwable;
  * @package Rucaptcha
  * @author Dmitry Gladyshev <deel@email.ru>
  */
-class Client extends GenericClient
+final class Client extends GenericClient
 {
     /* json status codes */
     const STATUS_CODE_CAPCHA_NOT_READY = 0;
@@ -23,33 +22,15 @@ class Client extends GenericClient
 
     /* status codes */
     const STATUS_OK_REPORT_RECORDED = 'OK_REPORT_RECORDED';
-
-    /**
-     * @var int
-     */
-    protected $recaptchaRTimeout = 15;
-
-    /**
-     * @var string
-     */
-    protected $serverBaseUri = 'http://rucaptcha.com';
-
-    /**
-     * Your application ID in Rucaptcha catalog.
-     * The value `1013` is ID of this library. Set in false if you want to turn off sending any ID.
-     *
-     * @see https://rucaptcha.com/software/view/php-api-client
-     * @var string
-     */
-    protected $softId = '1013';
+    
 
     /**
      * @inheritdoc
      */
-    public function sendCaptcha($content, array $extra = [])
+    public function sendCaptcha($content, array $extra = []): string
     {
-        if ($this->softId && !isset($extra[Extra::SOFT_ID])) {
-            $extra[Extra::SOFT_ID] = $this->softId;
+        if ($this->config->getSoftId() && !isset($extra[Extra::SOFT_ID])) {
+            $extra[Extra::SOFT_ID] = $this->config->getSoftId();
         }
         return parent::sendCaptcha($content, $extra);
     }
@@ -59,23 +40,21 @@ class Client extends GenericClient
      *
      * @param int[] $captchaIds # Captcha task Ids array
      * @return string[]                 # Array $captchaId => $captchaText or false if is not ready
-     * @throws GuzzleException
+     * @throws Throwable
      */
-    public function getCaptchaResultBulk(array $captchaIds)
+    public function getCaptchaResultBulk(array $captchaIds): array
     {
-        $request = new Request('GET', '/res.php?' . http_build_query([
-            'key' => $this->apiKey,
+        $request = new Request('GET', $this->config->getServerBaseUri() . '/res.php?' . http_build_query([
+            'key' => $this->config->getApiKey(),
             'action' => 'get',
             'ids' => implode(',', $captchaIds)
         ]));
 
-        $response = $this
-            ->getHttpClient()
-            ->sendRequest($request);
+        $response = $this->httpClient->sendRequest($request);
 
-        $captchaTexts = $response->getBody()->getContents();
+        $captchaTexts = $response->getBody()->__toString();
 
-        $this->getLogger()->info("Got bulk response: `{$captchaTexts}`.");
+        $this->logger->info("Got bulk response: `{$captchaTexts}`.");
 
         $captchaTexts = explode("|", $captchaTexts);
 
@@ -95,68 +74,40 @@ class Client extends GenericClient
      * @return string
      * @throws Throwable
      */
-    public function getBalance()
+    public function getBalance(): string
     {
-        $request = new Request('GET', "/res.php?key={$this->apiKey}&action=getbalance");
+        $request = new Request('GET', $this->config->getServerBaseUri() . "/res.php?key={$this->config->getApiKey()}&action=getbalance");
 
-        $response = $this
-            ->getHttpClient()
-            ->sendRequest($request);
+        $response = $this->httpClient->sendRequest($request);
 
-        return $response->getBody()->getContents();
+        return $response->getBody()->__toString();
     }
 
-    /**
-     * Alias of $this->reportBad();
-     *
-     * @param string $captchaId
-     * @return bool
-     * @throws Throwable
-     * @deprecated
-     */
-    public function badCaptcha($captchaId)
-    {
-        return $this->reportBad($captchaId);
-    }
-
-    /**
-     * Alias of $this->reportGood();
-     *
-     * @param string $captchaId
-     * @return bool
-     * @throws ErrorResponseException
-     * @throws Throwable
-     * @deprecated
-     */
-    public function goodCaptcha($captchaId)
-    {
-        return $this->reportGood($captchaId);
-    }
 
     /**
      * Report of wrong recognition.
      *
      * @param string $captchaId
-     * @return bool
      * @throws ErrorResponseException
      * @throws Throwable
      */
-    public function reportBad($captchaId)
+    public function reportBad(string $captchaId): void
     {
-        $request = new Request('GET', "/res.php?key={$this->apiKey}&action=reportbad&id={$captchaId}");
+        $request = new Request(
+            'GET',
+            $this->config->getServerBaseUri() . "/res.php?key={$this->config->getApiKey()}&action=reportbad&id={$captchaId}"
+        );
 
-        $response = $this
-            ->getHttpClient()
-            ->sendRequest($request);
+        $response = $this->httpClient->sendRequest($request);
 
-        $responseText = $response->getBody()->getContents();
+        $responseText = $response->getBody()->__toString();
 
         if ($responseText === self::STATUS_OK_REPORT_RECORDED) {
-            return true;
+            return;
         }
 
         throw new ErrorResponseException(
-            $this->getErrorMessage($responseText) ?: $responseText,
+            Error::$messages[$responseText] ?? $responseText,
             $this->getErrorCode($responseText) ?: 0
         );
     }
@@ -166,26 +117,26 @@ class Client extends GenericClient
      * Reports rucaptcha for good recognition.
      *
      * @param $captchaId
-     * @return bool
      * @throws ErrorResponseException
      * @throws Throwable
      */
-    public function reportGood($captchaId)
+    public function reportGood($captchaId): void
     {
-        $request = new Request('GET', "/res.php?key={$this->apiKey}&action=reportgood&id={$captchaId}");
+        $request = new Request(
+            'GET',
+            $this->config->getServerBaseUri() . "/res.php?key={$this->config->getApiKey()}&action=reportgood&id={$captchaId}"
+        );
 
-        $response = $this
-            ->getHttpClient()
-            ->sendRequest($request);
+        $response = $this->httpClient->sendRequest($request);
 
-        $responseText = $response->getBody()->getContents();
+        $responseText = $response->getBody()->__toString();
 
         if ($responseText === self::STATUS_OK_REPORT_RECORDED) {
-            return true;
+            return;
         }
 
         throw new ErrorResponseException(
-            $this->getErrorMessage($responseText) ?: $responseText,
+            Error::$messages[$responseText] ?? $responseText,
             $this->getErrorCode($responseText) ?: 0
         );
     }
@@ -196,22 +147,23 @@ class Client extends GenericClient
      * @throws ErrorResponseException
      * @throws Throwable
      */
-    public function getCaptchaResultWithCost($captchaId)
+    public function getCaptchaResultWithCost(string $captchaId): array
     {
-        $request = new Request('GET', "/res.php?key={$this->apiKey}&action=get2&id={$captchaId}");
+        $request = new Request(
+            'GET',
+            $this->config->getServerBaseUri() . "/res.php?key={$this->config->getApiKey()}&action=get2&id={$captchaId}"
+        );
 
-        $response = $this
-            ->getHttpClient()
-            ->sendRequest($request);
+        $response = $this->httpClient->sendRequest($request);
 
-        $responseText = $response->getBody()->getContents();
+        $responseText = $response->getBody()->__toString();
 
         if ($responseText === self::STATUS_CAPTCHA_NOT_READY) {
-            return false;
+            return [];
         }
 
         if (strpos($responseText, 'OK|') !== false) {
-            $this->getLogger()->info("Got OK response: `{$responseText}`.");
+            $this->logger->info("Got OK response: `{$responseText}`.");
             $data = explode('|', $responseText);
             return [
                 'captcha' => html_entity_decode(trim($data[1])),
@@ -220,7 +172,7 @@ class Client extends GenericClient
         }
 
         throw new ErrorResponseException(
-            $this->getErrorMessage($responseText) ?: $responseText,
+            Error::$messages[$responseText] ?? $responseText,
             $this->getErrorCode($responseText) ?: 0
         );
     }
@@ -229,26 +181,26 @@ class Client extends GenericClient
      * Add pingback url to rucaptcha whitelist.
      *
      * @param string $url
-     * @return bool                     # true if added and exception if fail
      * @throws ErrorResponseException
      * @throws Throwable
      */
-    public function addPingback($url)
+    public function addPingback(string $url): void
     {
-        $request = new Request('GET', "/res.php?key={$this->apiKey}&action=add_pingback&addr={$url}");
+        $request = new Request(
+            'GET',
+            $this->config->getServerBaseUri() . "/res.php?key={$this->config->getApiKey()}&action=add_pingback&addr={$url}"
+        );
 
-        $response = $this
-            ->getHttpClient()
-            ->sendRequest($request);
+        $response = $this->httpClient->sendRequest($request);
 
-        $responseText = $response->getBody()->getContents();
+        $responseText = $response->getBody()->__toString();
 
         if ($responseText === self::STATUS_OK) {
-            return true;
+            return;
         }
 
         throw new ErrorResponseException(
-            $this->getErrorMessage($responseText) ?: $responseText,
+            Error::$messages[$responseText] ?? $responseText,
             $this->getErrorCode($responseText) ?: 0
         );
     }
@@ -260,15 +212,16 @@ class Client extends GenericClient
      * @throws ErrorResponseException
      * @throws Throwable
      */
-    public function getPingbacks()
+    public function getPingbacks(): array
     {
-        $request = new Request('GET', "/res.php?key={$this->apiKey}&action=get_pingback");
+        $request = new Request(
+            'GET',
+            $this->config->getServerBaseUri() . "/res.php?key={$this->config->getApiKey()}&action=get_pingback"
+        );
 
-        $response = $this
-            ->getHttpClient()
-            ->sendRequest($request);
+        $response = $this->httpClient->sendRequest($request);
 
-        $responseText = $response->getBody()->getContents();
+        $responseText = $response->getBody()->__toString();
 
         if (strpos($responseText, 'OK|') !== false) {
             $data = explode('|', $responseText);
@@ -277,7 +230,7 @@ class Client extends GenericClient
         }
 
         throw new ErrorResponseException(
-            $this->getErrorMessage($responseText) ?: $responseText,
+            Error::$messages[$responseText] ?? $responseText,
             $this->getErrorCode($responseText) ?: 0
         );
     }
@@ -286,26 +239,26 @@ class Client extends GenericClient
      * Remove pingback url from whitelist.
      *
      * @param string $uri
-     * @return bool
      * @throws ErrorResponseException
      * @throws Throwable
      */
-    public function deletePingback($uri)
+    public function deletePingback(string $uri): void
     {
-        $request = new Request('GET', "/res.php?key={$this->apiKey}&action=del_pingback&addr={$uri}");
+        $request = new Request(
+            'GET',
+            $this->config->getServerBaseUri() . "/res.php?key={$this->config->getApiKey()}&action=del_pingback&addr={$uri}"
+        );
 
-        $response = $this
-            ->getHttpClient()
-            ->sendRequest($request);
+        $response = $this->httpClient->sendRequest($request);
 
-        $responseText = $response->getBody()->getContents();
+        $responseText = $response->getBody()->__toString();
 
         if ($responseText === self::STATUS_OK) {
-            return true;
+            return;
         }
 
         throw new ErrorResponseException(
-            $this->getErrorMessage($responseText) ?: $responseText,
+            Error::$messages[$responseText] ?? $responseText,
             $this->getErrorCode($responseText) ?: 0
         );
     }
@@ -313,13 +266,12 @@ class Client extends GenericClient
     /**
      * Truncate pingback whitelist.
      *
-     * @return bool
      * @throws ErrorResponseException
      * @throws Throwable
      */
-    public function deleteAllPingbacks()
+    public function deleteAllPingbacks(): void
     {
-        return $this->deletePingback('all');
+        $this->deletePingback('all');
     }
 
     /* Recaptcha v2 */
@@ -336,36 +288,42 @@ class Client extends GenericClient
      * @throws ErrorResponseException
      * @throws Throwable
      */
-    public function sendRecaptchaV2($googleKey, $pageUrl, $extra = [])
-    {
-        $this->getLogger()->info("Try send google key (recaptcha)  on {$this->serverBaseUri}/in.php");
+    public function sendRecaptchaV2(
+        string $googleKey,
+        string $pageUrl,
+        array $extra = []
+    ): string {
+        $this->logger->info("Try send google key (recaptcha)  on {$this->config->getServerBaseUri()}/in.php");
 
-        if ($this->softId && !isset($extra[Extra::SOFT_ID])) {
-            $extra[Extra::SOFT_ID] = $this->softId;
+        if ($this->config->getSoftId() && !isset($extra[Extra::SOFT_ID])) {
+            $extra[Extra::SOFT_ID] = $this->config->getSoftId();
         }
 
         $params = array_merge($extra, [
             'method' => 'userrecaptcha',
-            'key' => $this->apiKey,
+            'key' => $this->config->getApiKey(),
             'googlekey' => $googleKey,
             'pageurl' => $pageUrl
         ]);
 
-        $request = new Request('POST', "/in.php?" . http_build_query($params));
+        $request = new Request(
+            'POST',
+            $this->config->getServerBaseUri() . "/in.php?" . http_build_query($params)
+        );
 
-        $response = $this
-            ->getHttpClient()
-            ->sendRequest($request);
+        $response = $this->httpClient->sendRequest($request);
 
-        $responseText = $response->getBody()->getContents();
+        $responseText = $response->getBody()->__toString();
 
         if (strpos($responseText, 'OK|') !== false) {
             $this->lastCaptchaId = explode("|", $responseText)[1];
-            $this->getLogger()->info("Sending success. Got captcha id `{$this->lastCaptchaId}`.");
+            $this->logger->info("Sending success. Got captcha id `{$this->lastCaptchaId}`.");
             return $this->lastCaptchaId;
         }
 
-        throw new ErrorResponseException($this->getErrorMessage($responseText) ?: "Unknown error: `{$responseText}`.");
+        throw new ErrorResponseException(
+            Error::$messages[$responseText] ?? "Unknown error: '{$responseText}'."
+        );
     }
 
     /**
@@ -382,27 +340,30 @@ class Client extends GenericClient
      * @throws RuntimeException
      * @throws Throwable
      */
-    public function recognizeRecaptchaV2($googleKey, $pageUrl, $extra = [])
-    {
+    public function recognizeRecaptchaV2(
+        string $googleKey,
+        string $pageUrl,
+        array $extra = []
+    ): string {
         $captchaId = $this->sendRecaptchaV2($googleKey, $pageUrl, $extra);
         $startTime = time();
 
         while (true) {
-            $this->getLogger()->info("Waiting {$this->recaptchaRTimeout} sec.");
+            $this->logger->info("Waiting {$this->config->getRecaptchaRTimeout()} sec.");
 
-            sleep($this->recaptchaRTimeout);
+            sleep($this->config->getRecaptchaRTimeout());
 
-            if (time() - $startTime >= $this->mTimeout) {
+            if (time() - $startTime >= $this->config->getMTimeout()) {
                 throw new RuntimeException("Captcha waiting timeout.");
             }
 
             $result = $this->getCaptchaResult($captchaId);
 
-            if ($result === false) {
+            if ($result === null) {
                 continue;
             }
 
-            $this->getLogger()->info("Elapsed " . (time()-$startTime) . " second(s).");
+            $this->logger->info("Elapsed " . (time()-$startTime) . " second(s).");
 
             return $result;
         }
@@ -424,37 +385,46 @@ class Client extends GenericClient
      *
      * @see https://rucaptcha.com/blog/for_webmaster/recaptcha-v3-obhod
      */
-    public function sendRecaptchaV3($googleKey, $pageUrl, $action, $minScore = '0.3', $extra = [])
-    {
-        $this->getLogger()->info("Try send google key (recaptcha v3)  on {$this->serverBaseUri}/in.php");
+    public function sendRecaptchaV3(
+        string $googleKey,
+        string $pageUrl,
+        string $action,
+        string $minScore = '0.3',
+        array $extra = []
+    ): string {
+        $this->logger->info("Try send google key (recaptcha v3)  on {$this->config->getServerBaseUri()}/in.php");
 
-        if ($this->softId && !isset($extra[Extra::SOFT_ID])) {
-            $extra[Extra::SOFT_ID] = $this->softId;
+        if (
+            $this->config->getSoftId()
+            && !isset($extra[Extra::SOFT_ID])
+        ) {
+            $extra[Extra::SOFT_ID] = $this->config->getSoftId();
         }
 
-        $request = new Request('POST', "/in.php?". http_build_query(array_merge($extra, [
-            'method' => 'userrecaptcha',
-            'version' => 'v3',
-            'key' => $this->apiKey,
-            'googlekey' => $googleKey,
-            'pageurl' => $pageUrl,
-            'action' => $action,
-            'min_score' => $minScore
-        ])));
+        $request = new Request(
+            'POST',
+            $this->config->getServerBaseUri() . "/in.php?". http_build_query(array_merge($extra, [
+                'method' => 'userrecaptcha',
+                'version' => 'v3',
+                'key' => $this->config->getApiKey(),
+                'googlekey' => $googleKey,
+                'pageurl' => $pageUrl,
+                'action' => $action,
+                'min_score' => $minScore
+            ]))
+        );
 
-        $response = $this
-            ->getHttpClient()
-            ->sendRequest($request);
+        $response = $this->httpClient->sendRequest($request);
 
-        $responseText = $response->getBody()->getContents();
+        $responseText = $response->getBody()->__toString();
 
         if (strpos($responseText, 'OK|') !== false) {
             $this->lastCaptchaId = explode("|", $responseText)[1];
-            $this->getLogger()->info("Sending success. Got captcha id `{$this->lastCaptchaId}`.");
+            $this->logger->info("Sending success. Got captcha id `{$this->lastCaptchaId}`.");
             return $this->lastCaptchaId;
         }
 
-        throw new ErrorResponseException($this->getErrorMessage($responseText) ?: "Unknown error: `{$responseText}`.");
+        throw new ErrorResponseException(Error::$messages[$responseText] ?? "Unknown error: '{$responseText}'.");
     }
 
     /**
@@ -464,34 +434,39 @@ class Client extends GenericClient
      * @param string $minScore
      * @param array $extra
      *
-     * @return false|string
+     * @return string
      *
      * @throws ErrorResponseException
      * @throws InvalidArgumentException
      * @throws RuntimeException
      * @throws Throwable
      */
-    public function recognizeRecaptchaV3($googleKey, $pageUrl, $action, $minScore = '0.3', $extra = [])
-    {
+    public function recognizeRecaptchaV3(
+        string $googleKey,
+        string $pageUrl,
+        string $action,
+        string $minScore = '0.3',
+        array $extra = []
+    ): string {
         $captchaId = $this->sendRecaptchaV3($googleKey, $pageUrl, $action, $minScore, $extra);
         $startTime = time();
 
         while (true) {
-            $this->getLogger()->info("Waiting {$this->recaptchaRTimeout} sec.");
+            $this->logger->info("Waiting {$this->config->getRecaptchaRTimeout()} sec.");
 
-            sleep($this->recaptchaRTimeout);
+            sleep($this->config->getRecaptchaRTimeout());
 
-            if (time() - $startTime >= $this->mTimeout) {
+            if (time() - $startTime >= $this->config->getMTimeout()) {
                 throw new RuntimeException("Captcha waiting timeout.");
             }
 
             $result = $this->getCaptchaResult($captchaId);
 
-            if ($result === false) {
+            if ($result === null) {
                 continue;
             }
 
-            $this->getLogger()->info("Elapsed " . (time()-$startTime) . " second(s).");
+            $this->logger->info("Elapsed " . (time()-$startTime) . " second(s).");
 
             return $result;
         }
@@ -513,42 +488,45 @@ class Client extends GenericClient
      * @throws Throwable
      */
     public function sendKeyCaptcha(
-        $SSCUserId,
-        $SSCSessionId,
-        $SSCWebServerSign,
-        $SSCWebServerSign2,
-        $pageUrl,
-        $extra = []
-    ) {
-        $this->getLogger()->info("Try send google key (recaptcha)  on {$this->serverBaseUri}/in.php");
+        string $SSCUserId,
+        string $SSCSessionId,
+        string $SSCWebServerSign,
+        string $SSCWebServerSign2,
+        string $pageUrl,
+        array $extra = []
+    ): string {
+        $this->logger->info("Try send google key (recaptcha)  on {$this->config->getServerBaseUri()}/in.php");
 
-        if ($this->softId && !isset($extra[Extra::SOFT_ID])) {
-            $extra[Extra::SOFT_ID] = $this->softId;
+        if ($this->config->getSoftId() && !isset($extra[Extra::SOFT_ID])) {
+            $extra[Extra::SOFT_ID] = $this->config->getSoftId();
         }
 
-        $request = new Request('POST', "/in.php?" . http_build_query(array_merge($extra, [
-            'method' => 'keycaptcha',
-            'key' => $this->apiKey,
-            's_s_c_user_id' => $SSCUserId,
-            's_s_c_session_id' => $SSCSessionId,
-            's_s_c_web_server_sign' => $SSCWebServerSign,
-            's_s_c_web_server_sign2' => $SSCWebServerSign2,
-            'pageurl' => $pageUrl
-        ])));
+        $request = new Request(
+            'POST',
+            $this->config->getServerBaseUri() . "/in.php?" . http_build_query(array_merge($extra, [
+                'method' => 'keycaptcha',
+                'key' => $this->config->getApiKey(),
+                's_s_c_user_id' => $SSCUserId,
+                's_s_c_session_id' => $SSCSessionId,
+                's_s_c_web_server_sign' => $SSCWebServerSign,
+                's_s_c_web_server_sign2' => $SSCWebServerSign2,
+                'pageurl' => $pageUrl
+            ]))
+        );
 
-        $response = $this
-            ->getHttpClient()
-            ->sendRequest($request);
+        $response = $this->httpClient->sendRequest($request);
 
-        $responseText = $response->getBody()->getContents();
+        $responseText = $response->getBody()->__toString();
 
         if (strpos($responseText, 'OK|') !== false) {
             $this->lastCaptchaId = explode("|", $responseText)[1];
-            $this->getLogger()->info("Sending success. Got captcha id `{$this->lastCaptchaId}`.");
+            $this->logger->info("Sending success. Got captcha id `{$this->lastCaptchaId}`.");
             return $this->lastCaptchaId;
         }
 
-        throw new ErrorResponseException($this->getErrorMessage($responseText) ?: "Unknown error: `{$responseText}`.");
+        throw new ErrorResponseException(
+            Error::$messages[$responseText] ?? "Unknown error: '{$responseText}'."
+        );
     }
 
     /**
@@ -567,24 +545,24 @@ class Client extends GenericClient
      * @throws Throwable
      */
     public function recognizeKeyCaptcha(
-        $SSCUserId,
-        $SSCSessionId,
-        $SSCWebServerSign,
-        $SSCWebServerSign2,
-        $pageUrl,
-        $extra = []
-    ) {
+        string $SSCUserId,
+        string $SSCSessionId,
+        string $SSCWebServerSign,
+        string $SSCWebServerSign2,
+        string $pageUrl,
+        array $extra = []
+    ): string {
         $captchaId = $this
             ->sendKeyCaptcha($SSCUserId, $SSCSessionId, $SSCWebServerSign, $SSCWebServerSign2, $pageUrl, $extra);
 
         $startTime = time();
 
         while (true) {
-            $this->getLogger()->info("Waiting {$this->recaptchaRTimeout} sec.");
+            $this->logger->info("Waiting {$this->config->getRecaptchaRTimeout()} sec.");
 
-            sleep($this->recaptchaRTimeout);
+            sleep($this->config->getRecaptchaRTimeout());
 
-            if (time() - $startTime >= $this->mTimeout) {
+            if (time() - $startTime >= $this->config->getMTimeout()) {
                 throw new RuntimeException("Captcha waiting timeout.");
             }
 
@@ -594,7 +572,7 @@ class Client extends GenericClient
                 continue;
             }
 
-            $this->getLogger()->info("Elapsed " . (time()-$startTime) . " second(s).");
+            $this->logger->info("Elapsed " . (time()-$startTime) . " second(s).");
 
             return $result;
         }
@@ -604,20 +582,21 @@ class Client extends GenericClient
      * Override generic method for using json response.
      *
      * @param string $captchaId # Captcha task ID
-     * @return false|string             # Solved captcha text or false if captcha is not ready
+     * @return null|string             # Solved captcha text or false if captcha is not ready
      * @throws ErrorResponseException
      * @throws InvalidArgumentException
      * @throws Throwable
      */
-    public function getCaptchaResult($captchaId)
+    public function getCaptchaResult(string $captchaId): ?string
     {
-        $request = new Request('GET', "/res.php?key={$this->apiKey}&action=get&id={$captchaId}&json=1");
+        $request = new Request(
+            'GET',
+            $this->config->getServerBaseUri() . "/res.php?key={$this->config->getApiKey()}&action=get&id={$captchaId}&json=1"
+        );
 
-        $response = $this
-            ->getHttpClient()
-            ->sendRequest($request);
+        $response = $this->httpClient->sendRequest($request);
 
-        $responseData = json_decode($response->getBody()->getContents(), true);
+        $responseData = json_decode($response->getBody()->__toString(), true);
 
         if (JSON_ERROR_NONE !== json_last_error()) {
             throw new InvalidArgumentException(
@@ -630,12 +609,12 @@ class Client extends GenericClient
         }
 
         if ($responseData['status'] === self::STATUS_CODE_OK) {
-            $this->getLogger()->info("Got OK response: `{$responseData['request']}`.");
+            $this->logger->info("Got OK response: `{$responseData['request']}`.");
             return $responseData['request'];
         }
 
         throw new ErrorResponseException(
-            $this->getErrorMessage($responseData['request']) ?: $responseData['request'],
+            Error::$messages[$responseData['request']] ?? $responseData['request'],
             $responseData['status']
         );
     }
@@ -646,7 +625,7 @@ class Client extends GenericClient
      * @param string $responseText
      * @return int
      */
-    private function getErrorCode($responseText)
+    private function getErrorCode(string $responseText): int
     {
         if (preg_match('/ERROR:\s*(\d{0,4})/ui', $responseText, $matches)) {
             return intval($matches[1]);

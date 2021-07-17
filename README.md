@@ -16,7 +16,7 @@ or
 ```php
 "require": {
   ...
-  "gladyshev/rucaptcha-client": "*"
+  "gladyshev/rucaptcha-client": "^2.0.0"
   ...
 }
 ```
@@ -32,14 +32,15 @@ $rucaptcha = new Rucaptcha\Client('YOUR_API_KEY');
 $captchaText = $rucaptcha->recognizeFile('captcha.png');
 print_r($captchaText); // h54g6
 ```
+
 ```php
 /* Advanced example */
 
-$rucaptcha = new Rucaptcha\Client('YOUR_API_KEY', [
-    'verbose'    => true,
-    'httpClient' => new \GuzzleHttp\Client(['base_uri' => 'https://2captcha.com']),
-    'logger'     => new \Monolog\Logger('2Captcha', [new StreamHandler('php://stdout')])
-]);
+$rucaptcha = new \Rucaptcha\Client(
+    \Rucaptcha\Config::fromApiKey('YOUR_API_KEY'),
+    new \GuzzleHttp\Client(['base_uri' => 'https://2captcha.com']),
+    new \Monolog\Logger('2Captcha', [new \Monolog\Handler\StreamHandler('php://stdout')])
+);
 
 $taskIds = [];
 
@@ -78,21 +79,6 @@ print_r($results);
 ```php
 use Rucaptcha\Client;
 
-/* Constructor */
-
-Client::__construct($apiKey, array $options = []): void;
-
-
-/* Configuration */
-
-Client::setOptions(array $options): void;
-
-// Guzzle PSR-18 HTTP-client
-Client::setHttpClient(Psr\Http\Client\ClientInterface $client): void;
-
-// PSR-3 logger
-Client::setLogger(Psr\Log\LoggerInterface $logger): void;
-
 /* Solving captcha methods */
 
 Client::recognize(string $content, array $extra = []): string;
@@ -103,10 +89,10 @@ Client::getCaptchaResultBulk(array $captchaIds): array;
 
 /* Pingback stuff */
 
-Client::addPingback(string $uri): bool;
+Client::addPingback(string $uri): void;
 Client::getPingbacks(): array;
-Client::deletePingback(string $uri): bool;
-Client::deleteAllPingbacks(): bool;
+Client::deletePingback(string $uri): void;
+Client::deleteAllPingbacks(): void;
 
 /* Google Recaptcha V2 */
 

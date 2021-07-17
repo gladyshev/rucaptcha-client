@@ -1,15 +1,9 @@
 <?php
-/**
- * @author Dmitry Gladyshev <deel@email.ru>
- */
 
 namespace Rucaptcha;
 
 use GuzzleHttp\Psr7\Request;
 use Psr\Http\Client\ClientInterface;
-use GuzzleHttp\RequestOptions;
-use Psr\Log\LoggerAwareInterface;
-use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Rucaptcha\Exception\ErrorResponseException;
@@ -18,101 +12,52 @@ use Rucaptcha\Exception\RuntimeException;
 use SplFileObject;
 use Throwable;
 
-class GenericClient implements LoggerAwareInterface
+class GenericClient
 {
-    use LoggerAwareTrait;
-    use ConfigurableTrait;
-
     /* Statuses */
     const STATUS_OK = 'OK';
     const STATUS_CAPTCHA_NOT_READY = 'CAPCHA_NOT_READY';
 
-    /**
-     * @var string
-     */
-    protected $lastCaptchaId = '';
+    protected string $lastCaptchaId = '';
+    protected ConfigInterface $config;
+    protected ClientInterface $httpClient;
+    protected LoggerInterface $logger;
 
     /**
-     * @var string
+     * GenericClient constructor.
+     *
+     * @param ConfigInterface $config
+     * @param ClientInterface $httpClient
+     * @param LoggerInterface|null $logger
      */
-    protected $serverBaseUri = '';
-
-    /**
-     * @var bool
-     */
-    protected $verbose = false;
-
-    /**
-     * @var string
-     */
-    protected $apiKey = '';
-
-    /**
-     * @var int
-     */
-    protected $rTimeout = 5;
-
-    /**
-     * @var int
-     */
-    protected $mTimeout = 120;
-
-    /**
-     * @var ClientInterface
-     */
-    private $httpClient = null;
-
-    /**
-     * @param array $options
-     * @param string $apiKey
-     * @throws InvalidArgumentException
-     */
-    public function __construct($apiKey, array $options = [])
-    {
-        $this->apiKey = $apiKey;
-        $this->setOptions($options);
+    public function __construct(
+        ConfigInterface $config,
+        ClientInterface $httpClient,
+        ?LoggerInterface $logger = null
+    ) {
+        $this->config = $config;
+        $this->httpClient = $httpClient;
+        $this->logger = $logger ?? new NullLogger();
     }
 
     /**
      * @return string   # Last successfully sent captcha task ID
      */
-    public function getLastCaptchaId()
+    public function getLastCaptchaId(): string
     {
         return $this->lastCaptchaId;
     }
 
     /**
-     * @param ClientInterface $client
-     * @return $this
-     */
-    public function setHttpClient(ClientInterface $client)
-    {
-        $this->httpClient = $client;
-
-        return $this;
-    }
-
-    /**
-     * @param bool $verbose
-     * @return $this
-     */
-    public function setVerbose($verbose)
-    {
-        $this->logger = null;
-        $this->verbose = $verbose;
-
-        return $this;
-    }
-
-    /**
      * @param string $path
      * @param array $extra
+     *
      * @return string
+     *
      * @throws InvalidArgumentException
-     * @throws RuntimeException
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws Throwable
      */
-    public function recognizeFile($path, array $extra = [])
+    public function recognizeFile(string $path, array $extra = []): string
     {
         if (!file_exists($path)) {
             throw new InvalidArgumentException("Captcha file `$path` not found.");
@@ -132,31 +77,32 @@ class GenericClient implements LoggerAwareInterface
     /**
      * @param string $content
      * @param array $extra
+     * 
      * @return string
-     * @throws RuntimeException
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * 
+     * @throws Throwable
      */
-    public function recognize($content, array $extra = [])
+    public function recognize(string $content, array $extra = []): string
     {
         $captchaId = $this->sendCaptcha($content, $extra);
         $startTime = time();
 
         while (true) {
-            $this->getLogger()->info("Waiting {$this->rTimeout} sec.");
+            $this->logger->info("Waiting {$this->config->getRTimeout()} sec.");
 
-            sleep($this->rTimeout);
+            sleep($this->config->getRTimeout());
 
-            if (time() - $startTime >= $this->mTimeout) {
+            if (time() - $startTime >= $this->config->getMTimeout()) {
                 throw new RuntimeException("Captcha waiting timeout.");
             }
 
             $result = $this->getCaptchaResult($captchaId);
 
-            if ($result === false) {
+            if ($result === null) {
                 continue;
             }
 
-            $this->getLogger()->info("Elapsed " . (time()-$startTime) . " second(s).");
+            $this->logger->info("Elapsed " . (time()-$startTime) . " second(s).");
 
             return $result;
         }
@@ -168,9 +114,9 @@ class GenericClient implements LoggerAwareInterface
      * @return string               # Captcha task ID
      * @throws Throwable
      */
-    public function sendCaptcha($content, array $extra = [])
+    public function sendCaptcha(string $content, array $extra = []): string
     {
-        $this->getLogger()->info("Try send captcha image on {$this->serverBaseUri}/in.php");
+        $this->logger->info("Try send captcha image on {$this->config->getServerBaseUri()}/in.php");
 
         $headers = [
             'Content-Type' => 'application/x-www-form-urlencoded'
@@ -178,87 +124,52 @@ class GenericClient implements LoggerAwareInterface
 
         $body = http_build_query(array_merge($extra, [
             'method' => 'base64',
-            'key' => $this->apiKey,
+            'key' => $this->config->getApiKey(),
             'body' => base64_encode($content)
         ]));
 
-        $request = new Request('POST', '/in.php', $headers, $body);
+        $request = new Request('POST', $this->config->getServerBaseUri() . '/in.php', $headers, $body);
 
-        $response = $this->getHttpClient()->sendRequest($request);
+        $response = $this->httpClient->sendRequest($request);
 
-        $responseText = $response->getBody()->getContents();
+        $responseText = $response->getBody()->__toString();
 
         if (mb_strpos($responseText, 'OK|') !== false) {
             $this->lastCaptchaId = explode("|", $responseText)[1];
-            $this->getLogger()->info("Sending success. Got captcha id `{$this->lastCaptchaId}`.");
+            $this->logger->info("Sending success. Got captcha id `{$this->lastCaptchaId}`.");
             return $this->lastCaptchaId;
         }
 
-        throw new ErrorResponseException($this->getErrorMessage($responseText) ?: "Unknown error: `{$responseText}`.");
+        throw new ErrorResponseException(
+            Error::$messages[$responseText] ?? "Unknown error: `{$responseText}`."
+        );
     }
 
     /**
      * @param string $captchaId     # Captcha task ID
-     * @return string|false         # Solved captcha text or false if captcha is not ready
+     * @return string|null          # Solved captcha text or false if captcha is not ready
      * @throws Throwable
      */
-    public function getCaptchaResult($captchaId)
+    public function getCaptchaResult(string $captchaId): ?string
     {
-        $request = new \GuzzleHttp\Psr7\Request('GET', "/res.php?key={$this->apiKey}&action=get&id={$captchaId}");
+        $request = new Request(
+            'GET',
+            $this->config->getServerBaseUri() . "/res.php?key={$this->config->getApiKey()}&action=get&id={$captchaId}"
+        );
 
-        $response = $this
-            ->getHttpClient()
-            ->sendRequest($request);
+        $response = $this->httpClient->sendRequest($request);
 
-        $responseText = $response->getBody()->getContents();
+        $responseText = $response->getBody()->__toString();
 
         if ($responseText === self::STATUS_CAPTCHA_NOT_READY) {
-            return false;
+            return null;
         }
 
         if (mb_strpos($responseText, 'OK|') !== false) {
-            $this->getLogger()->info("Got OK response: `{$responseText}`.");
+            $this->logger->info("Got OK response: `{$responseText}`.");
             return html_entity_decode(trim(explode('|', $responseText)[1]));
         }
 
-        throw new ErrorResponseException($this->getErrorMessage($responseText) ?: $responseText);
-    }
-
-    /**
-     * @param string $responseText  # Server response text usually begin with `ERROR_` prefix
-     * @return false|string         # Error message text or false if associated message in not found
-     */
-    protected function getErrorMessage($responseText)
-    {
-        return isset(Error::$messages[$responseText])
-            ? Error::$messages[$responseText]
-            : false;
-    }
-
-    /**
-     * @return ClientInterface
-     */
-    protected function getHttpClient()
-    {
-        if ($this->httpClient === null) {
-            $this->httpClient = new \GuzzleHttp\Client([
-                'base_uri' => $this->serverBaseUri
-            ]);
-        }
-        return $this->httpClient;
-    }
-
-    /**
-     * @return LoggerInterface
-     */
-    public function getLogger()
-    {
-        if ($this->logger === null) {
-            $defaultLogger = $this->verbose
-                ? new Logger
-                : new NullLogger;
-            $this->setLogger($defaultLogger);
-        }
-        return $this->logger;
+        throw new ErrorResponseException(Error::$messages[$responseText] ?? $responseText);
     }
 }

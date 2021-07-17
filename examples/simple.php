@@ -2,6 +2,9 @@
 
 require '../vendor/autoload.php';
 
-$captchaText = (new Rucaptcha\Client(getenv('__RUCAPTCHA_KEY__')))->recognizeFile(__DIR__ . '/data/captcha.png');
+$rucaptcha = new Rucaptcha\Client(
+    Rucaptcha\Config::fromApiKey(getenv('__RUCAPTCHA_KEY__')),
+    new GuzzleHttp\Client()
+);
 
-var_dump($captchaText);
+var_dump($rucaptcha->recognizeFile(__DIR__ . '/data/captcha.png'));
